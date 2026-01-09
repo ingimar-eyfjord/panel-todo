@@ -1,0 +1,153 @@
+{
+  "name": "panel-todo",
+  "displayName": "Panel Todo",
+  "description": "Minimal panel todo list for AI-assisted coding sessions. Capture tasks while Claude thinks, export as prompts.",
+  "version": "0.3.0",
+  "publisher": "local",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ingimar-eyfjord/panel-todo"
+  },
+  "bugs": {
+    "url": "https://github.com/ingimar-eyfjord/panel-todo/issues"
+  },
+  "homepage": "https://github.com/ingimar-eyfjord/panel-todo#readme",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Snippets"
+  ],
+  "keywords": [
+    "todo",
+    "tasks",
+    "panel",
+    "ai",
+    "claude",
+    "copilot",
+    "productivity"
+  ],
+  "main": "./dist/extension.js",
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "compile": "tsc --noEmit",
+    "package": "npx @vscode/vsce package",
+    "publish": "npx @vscode/vsce publish"
+  },
+  "activationEvents": [
+    "onView:todoView",
+    "onCommand:panelTodo.addFromSelection",
+    "onCommand:panelTodo.exportAsPrompt",
+    "onCommand:panelTodo.focusInput",
+    "onCommand:panelTodo.undoDelete",
+    "onCommand:panelTodo.signIn",
+    "onCommand:panelTodo.signOut",
+    "onCommand:panelTodo.upgrade"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "todoPanel",
+          "title": "Todo",
+          "icon": "media/todo.svg"
+        }
+      ]
+    },
+    "views": {
+      "todoPanel": [
+        {
+          "id": "todoView",
+          "name": "Todo",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "panelTodo.addFromSelection",
+        "title": "Panel Todo: Add Selection as Todo"
+      },
+      {
+        "command": "panelTodo.exportAsPrompt",
+        "title": "Panel Todo: Export as Prompt Block"
+      },
+      {
+        "command": "panelTodo.focusInput",
+        "title": "Panel Todo: Focus Input"
+      },
+      {
+        "command": "panelTodo.undoDelete",
+        "title": "Panel Todo: Undo Delete"
+      },
+      {
+        "command": "panelTodo.signIn",
+        "title": "Panel Todo: Sign In"
+      },
+      {
+        "command": "panelTodo.signOut",
+        "title": "Panel Todo: Sign Out"
+      },
+      {
+        "command": "panelTodo.upgrade",
+        "title": "Panel Todo: Upgrade to Pro"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "panelTodo.addFromSelection",
+        "key": "ctrl+shift+t",
+        "mac": "cmd+shift+t",
+        "when": "editorHasSelection"
+      },
+      {
+        "command": "panelTodo.exportAsPrompt",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e"
+      },
+      {
+        "command": "panelTodo.focusInput",
+        "key": "ctrl+shift+i",
+        "mac": "cmd+shift+i"
+      },
+      {
+        "command": "panelTodo.undoDelete",
+        "key": "ctrl+shift+z",
+        "mac": "cmd+shift+z"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "panelTodo.addFromSelection",
+          "when": "editorHasSelection",
+          "group": "9_cutcopypaste@100"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Panel Todo",
+      "properties": {
+        "panelTodo.apiBaseUrl": {
+          "type": "string",
+          "default": "https://api.paneltodo.com",
+          "description": "Panel Todo API base URL used for device login and sync."
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "@types/ws": "^8.5.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.4.0"
+  }
+}

@@ -1,0 +1,25 @@
+# Development files
+.vscode/**
+.git/**
+.gitignore
+
+# Claude Code files
+.claude/**
+CLAUDE.md
+
+# Documentation (not needed in extension)
+docs/**
+
+# Build artifacts
+*.vsix
+node_modules/**
+
+# Source control
+.github/**
+
+# Misc
+.DS_Store
+*.md
+!README.md
+!CHANGELOG.md
+!LICENSE

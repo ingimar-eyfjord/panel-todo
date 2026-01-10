@@ -12,6 +12,8 @@ import * as utils from '../../src/utils';
 vi.mock('../../src/utils', () => ({
   requestJson: vi.fn(),
   delay: vi.fn().mockResolvedValue(undefined),
+  getApiUrl: vi.fn().mockReturnValue('https://api.panel-todo.com'),
+  getApiHeaders: vi.fn().mockResolvedValue({ 'Content-Type': 'application/json' }),
 }));
 
 describe('AuthService', () => {
@@ -423,6 +425,254 @@ describe('AuthService', () => {
       await authService.signIn();
 
       expect(window.showErrorMessage).toHaveBeenCalledWith('Failed to start device login');
+    });
+
+    it('should show error when device code response missing required fields', async () => {
+      vi.mocked(utils.requestJson).mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: {
+          // Missing deviceCode, userCode, verificationUri
+          expiresIn: 900,
+        },
+      });
+
+      await authService.signIn();
+
+      expect(window.showErrorMessage).toHaveBeenCalledWith('Auth server returned an invalid response');
+    });
+
+    it('should open verification page when selected', async () => {
+      window.showInformationMessage = vi.fn().mockResolvedValue('Open Verification Page');
+
+      // Track time to simulate expiration after first poll
+      let pollCount = 0;
+      const startTime = Date.now();
+      vi.spyOn(Date, 'now').mockImplementation(() => {
+        // After first poll, return time past expiration
+        if (pollCount > 0) {
+          return startTime + 10000; // Past expiration (expiresIn: 1s = 1000ms)
+        }
+        return startTime;
+      });
+
+      vi.mocked(utils.requestJson).mockImplementation(async (url: string) => {
+        if (url.includes('/auth/device-code')) {
+          return {
+            ok: true,
+            status: 200,
+            data: {
+              deviceCode: 'device-code-123',
+              userCode: 'ABC-DEF',
+              verificationUri: 'https://panel-todo.com/verify',
+              expiresIn: 1, // Very short to end quickly
+              interval: 5,
+            },
+          };
+        }
+        if (url.includes('/auth/token')) {
+          pollCount++;
+          return {
+            ok: false,
+            status: 400,
+            data: { error: 'AUTHORIZATION_PENDING' },
+          };
+        }
+        return { ok: false, status: 404, data: undefined };
+      });
+
+      await authService.signIn();
+
+      expect(env.openExternal).toHaveBeenCalled();
+    });
+
+    it('should successfully complete authentication when token received', async () => {
+      let pollCount = 0;
+      vi.mocked(utils.requestJson).mockImplementation(async (url: string) => {
+        if (url.includes('/auth/device-code')) {
+          return {
+            ok: true,
+            status: 200,
+            data: {
+              deviceCode: 'device-code-123',
+              userCode: 'ABC-DEF',
+              verificationUri: 'https://panel-todo.com/verify',
+              expiresIn: 900,
+              interval: 5,
+            },
+          };
+        }
+        if (url.includes('/auth/token')) {
+          pollCount++;
+          // Return token on second poll
+          if (pollCount >= 2) {
+            return {
+              ok: true,
+              status: 200,
+              data: {
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token',
+              },
+            };
+          }
+          return {
+            ok: false,
+            status: 400,
+            data: { error: 'AUTHORIZATION_PENDING' },
+          };
+        }
+        if (url.includes('/auth/me')) {
+          return {
+            ok: true,
+            status: 200,
+            data: { user: { id: 'user-1', email: 'test@example.com', tier: 'pro' } },
+          };
+        }
+        return { ok: false, status: 404, data: undefined };
+      });
+
+      await authService.signIn();
+
+      expect(window.showInformationMessage).toHaveBeenCalledWith('Panel Todo connected');
+      expect(authService.user).toEqual({ id: 'user-1', email: 'test@example.com', tier: 'pro' });
+      expect(await authService.getAccessToken()).toBe('test-access-token');
+      expect(await authService.getRefreshToken()).toBe('test-refresh-token');
+    });
+
+    it('should handle SLOW_DOWN error by increasing interval', async () => {
+      let slowDownCount = 0;
+      vi.mocked(utils.requestJson).mockImplementation(async (url: string) => {
+        if (url.includes('/auth/device-code')) {
+          return {
+            ok: true,
+            status: 200,
+            data: {
+              deviceCode: 'device-code-123',
+              userCode: 'ABC-DEF',
+              verificationUri: 'https://panel-todo.com/verify',
+              expiresIn: 900,
+              interval: 5,
+            },
+          };
+        }
+        if (url.includes('/auth/token')) {
+          slowDownCount++;
+          // After 2 slow downs, return token
+          if (slowDownCount <= 2) {
+            return {
+              ok: false,
+              status: 429,
+              data: { error: 'SLOW_DOWN' },
+            };
+          }
+          return {
+            ok: true,
+            status: 200,
+            data: { accessToken: 'test-token', refreshToken: 'refresh-token' },
+          };
+        }
+        if (url.includes('/auth/me')) {
+          return { ok: true, status: 200, data: { user: { id: 'user-1', tier: 'pro' } } };
+        }
+        return { ok: false, status: 404, data: undefined };
+      });
+
+      await authService.signIn();
+
+      expect(slowDownCount).toBe(3);
+      expect(utils.delay).toHaveBeenCalled();
+    });
+
+    it('should show friendly error on poll failure', async () => {
+      vi.mocked(utils.requestJson).mockImplementation(async (url: string) => {
+        if (url.includes('/auth/device-code')) {
+          return {
+            ok: true,
+            status: 200,
+            data: {
+              deviceCode: 'device-code-123',
+              userCode: 'ABC-DEF',
+              verificationUri: 'https://panel-todo.com/verify',
+              expiresIn: 900,
+              interval: 5,
+            },
+          };
+        }
+        if (url.includes('/auth/token')) {
+          return {
+            ok: false,
+            status: 400,
+            data: { error: { code: 'INVALID_CODE' } },
+          };
+        }
+        return { ok: false, status: 404, data: undefined };
+      });
+
+      await authService.signIn();
+
+      expect(window.showErrorMessage).toHaveBeenCalledWith(
+        expect.stringContaining('Invalid device code')
+      );
+    });
+
+    it('should handle poll network error', async () => {
+      let callCount = 0;
+      vi.mocked(utils.requestJson).mockImplementation(async (url: string) => {
+        if (url.includes('/auth/device-code')) {
+          return {
+            ok: true,
+            status: 200,
+            data: {
+              deviceCode: 'device-code-123',
+              userCode: 'ABC-DEF',
+              verificationUri: 'https://panel-todo.com/verify',
+              expiresIn: 900,
+              interval: 5,
+            },
+          };
+        }
+        if (url.includes('/auth/token')) {
+          callCount++;
+          throw new Error('Network error');
+        }
+        return { ok: false, status: 404, data: undefined };
+      });
+
+      await authService.signIn();
+
+      expect(window.showErrorMessage).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to poll auth server')
+      );
+    });
+
+    it('should handle non-ok response without error code', async () => {
+      vi.mocked(utils.requestJson).mockImplementation(async (url: string) => {
+        if (url.includes('/auth/device-code')) {
+          return {
+            ok: true,
+            status: 200,
+            data: {
+              deviceCode: 'device-code-123',
+              userCode: 'ABC-DEF',
+              verificationUri: 'https://panel-todo.com/verify',
+              expiresIn: 900,
+              interval: 5,
+            },
+          };
+        }
+        if (url.includes('/auth/token')) {
+          return {
+            ok: false,
+            status: 500,
+            data: {},
+          };
+        }
+        return { ok: false, status: 404, data: undefined };
+      });
+
+      await authService.signIn();
+
+      expect(window.showErrorMessage).toHaveBeenCalledWith('Failed to complete device login');
     });
   });
 

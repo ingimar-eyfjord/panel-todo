@@ -397,58 +397,6 @@ describe('WebSocketService', () => {
     });
   });
 
-  describe('API URL Configuration', () => {
-    it('should use dev API URL in dev mode', async () => {
-      (CONFIG as any).DEV_MODE = true;
-
-      // Access private method
-      const apiUrl = (wsService as any).getApiUrl();
-
-      expect(apiUrl).toBe(CONFIG.DEV_API_URL);
-    });
-
-    it('should use configured API URL', async () => {
-      workspace.getConfiguration = vi.fn().mockReturnValue({
-        get: vi.fn().mockReturnValue('https://custom-api.example.com'),
-      });
-
-      const apiUrl = (wsService as any).getApiUrl();
-
-      expect(apiUrl).toBe('https://custom-api.example.com');
-    });
-
-    it('should strip trailing slashes', async () => {
-      workspace.getConfiguration = vi.fn().mockReturnValue({
-        get: vi.fn().mockReturnValue('https://api.example.com//'),
-      });
-
-      const apiUrl = (wsService as any).getApiUrl();
-
-      expect(apiUrl).toBe('https://api.example.com');
-    });
-  });
-
-  describe('Headers', () => {
-    it('should include X-Dev-User in dev mode', async () => {
-      (CONFIG as any).DEV_MODE = true;
-
-      const headers = await (wsService as any).getHeaders();
-
-      expect(headers['X-Dev-User']).toBe(CONFIG.DEV_FAKE_USER_ID);
-    });
-
-    it('should include Authorization when token exists', async () => {
-      await context.secrets.store(STORAGE_KEYS.ACCESS_TOKEN, 'bearer-token');
-
-      const headers = await (wsService as any).getHeaders();
-
-      expect(headers['Authorization']).toBe('Bearer bearer-token');
-    });
-
-    it('should not include Authorization when no token', async () => {
-      const headers = await (wsService as any).getHeaders();
-
-      expect(headers['Authorization']).toBeUndefined();
-    });
-  });
+  // Note: API URL and Headers configuration tests are now in utils.test.ts
+  // since getApiUrl and getApiHeaders are shared utilities
 });

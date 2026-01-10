@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { EventEmitter } from 'events';
 import { User, DeviceCodeResponse, AuthTokens, CONFIG, STORAGE_KEYS, UserTier } from '../types';
-import { requestJson, delay } from '../utils';
+import { requestJson, delay, getApiUrl, getApiHeaders } from '../utils';
 
 interface AuthPending {
   userCode: string;
@@ -189,8 +189,8 @@ export class AuthService {
    * Fetch user info from API
    */
   async fetchUserInfo(): Promise<User | null> {
-    const apiUrl = this.getApiUrl();
-    const headers = await this.getApiHeaders();
+    const apiUrl = getApiUrl();
+    const headers = await getApiHeaders(this.context);
 
     try {
       const response = await requestJson<{ user?: User }>(`${apiUrl}/auth/me`, {
@@ -226,7 +226,7 @@ export class AuthService {
       return false;
     }
 
-    const apiUrl = this.getApiUrl();
+    const apiUrl = getApiUrl();
 
     try {
       const response = await requestJson<{ accessToken?: string; access_token?: string }>(
@@ -265,7 +265,7 @@ export class AuthService {
     this._authInProgress = true;
     this._authPending = null;
 
-    const apiUrl = this.getApiUrl();
+    const apiUrl = getApiUrl();
     const deviceName = this.getDeviceName();
 
     let response;
@@ -335,7 +335,7 @@ export class AuthService {
     cancelToken: CancelToken;
   }): Promise<void> {
     const { deviceCode, expiresAt, cancelToken } = params;
-    const apiUrl = this.getApiUrl();
+    const apiUrl = getApiUrl();
     // Use 2 second polling for better UX (faster than RFC 8628 default of 5s)
     let intervalMs = 2000;
 
@@ -434,32 +434,6 @@ export class AuthService {
       'STRIPE_ERROR': 'Could not verify subscription. Please try again.',
     };
     return messages[errorCode] || `Authentication failed: ${errorCode}`;
-  }
-
-  private getApiUrl(): string {
-    if (CONFIG.DEV_MODE) {
-      return CONFIG.DEV_API_URL;
-    }
-    const config = vscode.workspace.getConfiguration('panelTodo');
-    const baseUrl = config.get<string>(CONFIG.API_BASE_URL_SETTING, CONFIG.DEFAULT_API_BASE_URL);
-    return String(baseUrl).replace(/\/+$/, '');
-  }
-
-  private async getApiHeaders(): Promise<Record<string, string>> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (CONFIG.DEV_MODE) {
-      headers['X-Dev-User'] = CONFIG.DEV_FAKE_USER_ID;
-    } else {
-      const token = await this.getAccessToken();
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
-
-    return headers;
   }
 
   private getDeviceName(): string {

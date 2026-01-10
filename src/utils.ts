@@ -1,7 +1,8 @@
 import * as http from 'http';
 import * as https from 'https';
 import { URL } from 'url';
-import { ApiResponse, RequestOptions } from './types';
+import * as vscode from 'vscode';
+import { ApiResponse, RequestOptions, CONFIG, STORAGE_KEYS } from './types';
 
 /**
  * Generate a cryptographic nonce for CSP
@@ -128,4 +129,43 @@ function requestJsonNode<T>(
 export function formatTodosAsPrompt(todos: { text: string }[]): string {
   const items = todos.map((todo) => `- [ ] ${todo.text}`).join('\n');
   return `## Current Tasks\n\n${items}\n`;
+}
+
+/**
+ * Get the effective API URL (dev mode or production)
+ * Shared utility used by ApiService, AuthService, and WebSocketService
+ */
+export function getApiUrl(): string {
+  if (CONFIG.DEV_MODE) {
+    return CONFIG.DEV_API_URL;
+  }
+  const config = vscode.workspace.getConfiguration('panelTodo');
+  const baseUrl = config.get<string>(CONFIG.API_BASE_URL_SETTING, CONFIG.DEFAULT_API_BASE_URL);
+  return String(baseUrl).replace(/\/+$/, '');
+}
+
+/**
+ * Get API headers with optional authentication
+ * Shared utility used by ApiService, AuthService, and WebSocketService
+ */
+export async function getApiHeaders(
+  context: vscode.ExtensionContext,
+  options?: { includeContentType?: boolean }
+): Promise<Record<string, string>> {
+  const headers: Record<string, string> = {};
+
+  if (options?.includeContentType !== false) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  if (CONFIG.DEV_MODE) {
+    headers['X-Dev-User'] = CONFIG.DEV_FAKE_USER_ID;
+  } else {
+    const token = await context.secrets.get(STORAGE_KEYS.ACCESS_TOKEN);
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+
+  return headers;
 }

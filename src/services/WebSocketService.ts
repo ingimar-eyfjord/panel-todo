@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
-import { WebSocketEvent, WebSocketEventType, CONFIG, STORAGE_KEYS } from '../types';
+import { WebSocketEvent, WebSocketEventType } from '../types';
+import { getApiUrl, getApiHeaders } from '../utils';
 
 type EventHandler = (event: WebSocketEvent) => void;
 
@@ -45,10 +46,11 @@ export class WebSocketService {
   async connect(): Promise<void> {
     this.disconnect();
 
-    const apiUrl = this.getApiUrl();
+    const apiUrl = getApiUrl();
     const wsUrl = apiUrl.replace(/^http/, 'ws') + '/ws';
 
-    const headers = await this.getHeaders();
+    // WebSocket doesn't need Content-Type header
+    const headers = await getApiHeaders(this.context, { includeContentType: false });
 
     try {
       this.ws = new WebSocket(wsUrl, { headers });
@@ -158,30 +160,5 @@ export class WebSocketService {
         console.error('Failed to reconnect WebSocket:', err);
       });
     }, 5000);
-  }
-
-  private getApiUrl(): string {
-    if (CONFIG.DEV_MODE) {
-      return CONFIG.DEV_API_URL;
-    }
-    const config = vscode.workspace.getConfiguration('panelTodo');
-    const baseUrl = config.get<string>(CONFIG.API_BASE_URL_SETTING, CONFIG.DEFAULT_API_BASE_URL);
-    return String(baseUrl).replace(/\/+$/, '');
-  }
-
-  private async getHeaders(): Promise<Record<string, string>> {
-    const headers: Record<string, string> = {};
-
-    if (CONFIG.DEV_MODE) {
-      headers['X-Dev-User'] = CONFIG.DEV_FAKE_USER_ID;
-    } else {
-      // Use secrets API for secure token storage
-      const token = await this.context.secrets.get(STORAGE_KEYS.ACCESS_TOKEN);
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
-
-    return headers;
   }
 }

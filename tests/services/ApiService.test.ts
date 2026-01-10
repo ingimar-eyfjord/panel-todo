@@ -2,7 +2,7 @@
  * Unit tests for ApiService
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ApiService } from '../../src/services/ApiService';
 import { createMockExtensionContext, MockExtensionContext, workspace } from '../__mocks__/vscode';
 import { CONFIG, STORAGE_KEYS } from '../../src/types';
@@ -11,6 +11,8 @@ import * as utils from '../../src/utils';
 // Mock the utils module
 vi.mock('../../src/utils', () => ({
   requestJson: vi.fn(),
+  getApiUrl: vi.fn().mockReturnValue('https://api.panel-todo.com'),
+  getApiHeaders: vi.fn().mockResolvedValue({ 'Content-Type': 'application/json' }),
 }));
 
 describe('ApiService', () => {
@@ -28,88 +30,14 @@ describe('ApiService', () => {
     // Reset mocks
     vi.clearAllMocks();
 
-    // Setup workspace mock
-    workspace.getConfiguration = vi.fn().mockReturnValue({
-      get: vi.fn().mockImplementation((key: string, defaultValue?: unknown) => {
-        if (key === 'apiBaseUrl') {
-          return 'https://api.panel-todo.com';
-        }
-        return defaultValue;
-      }),
-    });
+    // Setup default mocks
+    vi.mocked(utils.getApiUrl).mockReturnValue('https://api.panel-todo.com');
+    vi.mocked(utils.getApiHeaders).mockResolvedValue({ 'Content-Type': 'application/json' });
   });
 
   afterEach(() => {
     // Restore DEV_MODE
     (CONFIG as any).DEV_MODE = originalDevMode;
-  });
-
-  describe('getApiUrl', () => {
-    it('should return production URL by default', () => {
-      (CONFIG as any).DEV_MODE = false;
-
-      const url = apiService.getApiUrl();
-      expect(url).toBe('https://api.panel-todo.com');
-    });
-
-    it('should return dev URL when DEV_MODE is true', () => {
-      (CONFIG as any).DEV_MODE = true;
-
-      const url = apiService.getApiUrl();
-      expect(url).toBe(CONFIG.DEV_API_URL);
-    });
-
-    it('should strip trailing slashes from URL', () => {
-      (CONFIG as any).DEV_MODE = false;
-      workspace.getConfiguration = vi.fn().mockReturnValue({
-        get: vi.fn().mockReturnValue('https://api.example.com///'),
-      });
-
-      const url = apiService.getApiUrl();
-      expect(url).toBe('https://api.example.com');
-    });
-
-    it('should use custom URL from configuration', () => {
-      (CONFIG as any).DEV_MODE = false;
-      workspace.getConfiguration = vi.fn().mockReturnValue({
-        get: vi.fn().mockReturnValue('https://custom-api.example.com'),
-      });
-
-      const url = apiService.getApiUrl();
-      expect(url).toBe('https://custom-api.example.com');
-    });
-  });
-
-  describe('getHeaders', () => {
-    it('should include Content-Type header', async () => {
-      (CONFIG as any).DEV_MODE = false;
-
-      const headers = await apiService.getHeaders();
-      expect(headers['Content-Type']).toBe('application/json');
-    });
-
-    it('should include X-Dev-User header in dev mode', async () => {
-      (CONFIG as any).DEV_MODE = true;
-
-      const headers = await apiService.getHeaders();
-      expect(headers['X-Dev-User']).toBe(CONFIG.DEV_FAKE_USER_ID);
-      expect(headers['Authorization']).toBeUndefined();
-    });
-
-    it('should include Authorization header when token exists', async () => {
-      (CONFIG as any).DEV_MODE = false;
-      await context.secrets.store(STORAGE_KEYS.ACCESS_TOKEN, 'test-token-123');
-
-      const headers = await apiService.getHeaders();
-      expect(headers['Authorization']).toBe('Bearer test-token-123');
-    });
-
-    it('should not include Authorization header when no token', async () => {
-      (CONFIG as any).DEV_MODE = false;
-
-      const headers = await apiService.getHeaders();
-      expect(headers['Authorization']).toBeUndefined();
-    });
   });
 
   describe('request', () => {

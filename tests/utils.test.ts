@@ -2,8 +2,10 @@
  * Unit tests for utils.ts
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getNonce, delay, formatTodosAsPrompt, requestJson } from '../src/utils';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { getNonce, delay, formatTodosAsPrompt, requestJson, getApiUrl, getApiHeaders } from '../src/utils';
+import { CONFIG, STORAGE_KEYS } from '../src/types';
+import { workspace, createMockExtensionContext, MockExtensionContext } from './__mocks__/vscode';
 
 describe('utils', () => {
   describe('getNonce', () => {
@@ -289,6 +291,111 @@ describe('utils', () => {
         'https://api.example.com/item/1',
         expect.objectContaining({ method: 'DELETE' })
       );
+    });
+  });
+
+  describe('getApiUrl', () => {
+    let originalDevMode: boolean;
+
+    beforeEach(() => {
+      originalDevMode = CONFIG.DEV_MODE;
+      workspace.getConfiguration = vi.fn().mockReturnValue({
+        get: vi.fn().mockImplementation((key: string, defaultValue?: unknown) => {
+          if (key === 'apiBaseUrl') {
+            return 'https://api.panel-todo.com';
+          }
+          return defaultValue;
+        }),
+      });
+    });
+
+    afterEach(() => {
+      (CONFIG as any).DEV_MODE = originalDevMode;
+    });
+
+    it('should return production URL by default', () => {
+      (CONFIG as any).DEV_MODE = false;
+
+      const url = getApiUrl();
+      expect(url).toBe('https://api.panel-todo.com');
+    });
+
+    it('should return dev URL when DEV_MODE is true', () => {
+      (CONFIG as any).DEV_MODE = true;
+
+      const url = getApiUrl();
+      expect(url).toBe(CONFIG.DEV_API_URL);
+    });
+
+    it('should strip trailing slashes from URL', () => {
+      (CONFIG as any).DEV_MODE = false;
+      workspace.getConfiguration = vi.fn().mockReturnValue({
+        get: vi.fn().mockReturnValue('https://api.example.com///'),
+      });
+
+      const url = getApiUrl();
+      expect(url).toBe('https://api.example.com');
+    });
+
+    it('should use custom URL from configuration', () => {
+      (CONFIG as any).DEV_MODE = false;
+      workspace.getConfiguration = vi.fn().mockReturnValue({
+        get: vi.fn().mockReturnValue('https://custom-api.example.com'),
+      });
+
+      const url = getApiUrl();
+      expect(url).toBe('https://custom-api.example.com');
+    });
+  });
+
+  describe('getApiHeaders', () => {
+    let context: MockExtensionContext;
+    let originalDevMode: boolean;
+
+    beforeEach(() => {
+      context = createMockExtensionContext();
+      originalDevMode = CONFIG.DEV_MODE;
+    });
+
+    afterEach(() => {
+      (CONFIG as any).DEV_MODE = originalDevMode;
+    });
+
+    it('should include Content-Type header by default', async () => {
+      (CONFIG as any).DEV_MODE = false;
+
+      const headers = await getApiHeaders(context as any);
+      expect(headers['Content-Type']).toBe('application/json');
+    });
+
+    it('should not include Content-Type when includeContentType is false', async () => {
+      (CONFIG as any).DEV_MODE = false;
+
+      const headers = await getApiHeaders(context as any, { includeContentType: false });
+      expect(headers['Content-Type']).toBeUndefined();
+    });
+
+    it('should include X-Dev-User header in dev mode', async () => {
+      (CONFIG as any).DEV_MODE = true;
+
+      const headers = await getApiHeaders(context as any);
+      expect(headers['X-Dev-User']).toBe(CONFIG.DEV_FAKE_USER_ID);
+      expect(headers['Authorization']).toBeUndefined();
+    });
+
+    it('should include Authorization header when token exists', async () => {
+      (CONFIG as any).DEV_MODE = false;
+      await context.secrets.store(STORAGE_KEYS.ACCESS_TOKEN, 'test-token-123');
+
+      const headers = await getApiHeaders(context as any);
+      expect(headers['Authorization']).toBe('Bearer test-token-123');
+    });
+
+    it('should not include Authorization header when no token', async () => {
+      (CONFIG as any).DEV_MODE = false;
+
+      const headers = await getApiHeaders(context as any);
+      expect(headers['Authorization']).toBeUndefined();
     });
   });
 });

@@ -3,6 +3,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {
   Todo,
+  TodoConflict,
+  ConflictResolution,
   Issue,
   Sprint,
   Tag,
@@ -53,6 +55,7 @@ interface WebviewMessage {
   tier?: UserTier | 'out';
   moveToBacklog?: boolean;
   moveIncomplete?: boolean;
+  resolution?: ConflictResolution;
 }
 
 /**
@@ -65,9 +68,11 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
   private _view: vscode.WebviewView | null = null;
   private _lastDeleted: Todo | null = null;
   private _tags: Tag[] = [];
+  private _conflicts: TodoConflict[] = [];
   private _fileWatcher: vscode.FileSystemWatcher | null = null;
   private _syncDebounceTimer: NodeJS.Timeout | null = null;
   private _disposed = false;
+  private _pendingAuthStateUpdate = false;
 
   // Services
   private storage: StorageService;
@@ -86,6 +91,24 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
 
     // Set up WebSocket event handler
     this.ws.onEvent((event) => this._handleWsEvent(event));
+
+    // Listen for auth state changes to update webview
+    this.auth.onAuthStateChanged(async () => {
+      await this._postAuthState();
+      // Sync Pro data if now authenticated with Pro
+      if (this.isPro()) {
+        await this._syncFromCloud();
+        await this._postProjects();
+        await this._postIssues();
+        await this._postSprints();
+        await this._postTags();
+      }
+    });
+
+    // Listen for connection state changes to update offline indicator
+    this.ws.onConnectionStateChanged((connected) => {
+      this._postConnectionState(connected);
+    });
   }
 
   // ============================================
@@ -196,6 +219,11 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
   ): void {
     this._view = webviewView;
 
+    // Process any pending auth state update
+    if (this._pendingAuthStateUpdate) {
+      this._postAuthState();
+    }
+
     webviewView.webview.options = {
       enableScripts: true,
     };
@@ -244,6 +272,8 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
       case 'ready':
         this._postTodos();
         await this._postAuthState();
+        this._postConnectionState(this.ws.isConnected);
+        this._postConflicts();
         if (this.isPro()) {
           await this._syncFromCloud();
           await this._postProjects();
@@ -289,6 +319,21 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
 
       case 'authOpenLink':
         this.auth.openVerificationUri();
+        break;
+
+      case 'resolveConflict':
+        if (message.id && message.resolution) {
+          await this._resolveConflict(
+            message.id as string,
+            message.resolution as ConflictResolution
+          );
+        }
+        break;
+
+      case 'resolveAllConflicts':
+        if (message.resolution) {
+          this._resolveAllConflicts(message.resolution as ConflictResolution);
+        }
         break;
 
       case 'openUpgrade':
@@ -534,6 +579,20 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
         }
         break;
 
+      case 'exportData':
+        await this._exportUserData();
+        break;
+
+      case 'deleteAccount':
+        await this._deleteUserAccount();
+        break;
+
+      case 'openLink':
+        if ((message as { url?: string }).url) {
+          vscode.env.openExternal(vscode.Uri.parse((message as { url?: string }).url!));
+        }
+        break;
+
       default:
         break;
     }
@@ -614,6 +673,8 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
       return;
     }
 
+    this._postSyncState(true);
+
     const todos = this._getTodos();
     const syncData = todos.map((todo) => ({
       id: todo.id,
@@ -635,6 +696,8 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
       }
     } catch (err) {
       console.error('Error syncing to cloud:', err);
+    } finally {
+      this._postSyncState(false);
     }
   }
 
@@ -642,6 +705,8 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
     if (this._disposed || !this.isPro()) {
       return;
     }
+
+    this._postSyncState(true);
 
     try {
       const response = await this.api.get<{ todos: Todo[] }>('/sync');
@@ -651,6 +716,71 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
       }
     } catch (err) {
       console.error('Error syncing from cloud:', err);
+    } finally {
+      this._postSyncState(false);
+    }
+  }
+
+  // ============================================
+  // Conflict Resolution
+  // ============================================
+
+  private _postConflicts(): void {
+    if (!this._view) {
+      return;
+    }
+    this._view.webview.postMessage({
+      type: 'conflicts',
+      conflicts: this._conflicts,
+    });
+  }
+
+  private async _resolveConflict(
+    conflictId: string,
+    resolution: ConflictResolution
+  ): Promise<void> {
+    const conflict = this._conflicts.find((c) => c.id === conflictId);
+    if (!conflict) {
+      return;
+    }
+
+    const todos = this._getTodos();
+
+    switch (resolution) {
+      case 'keep_local':
+        // Keep local version - no changes needed, just remove conflict
+        break;
+
+      case 'keep_remote':
+        // Replace local with remote
+        const index = todos.findIndex((t) => t.id === conflict.localTodo.id);
+        if (index !== -1) {
+          todos[index] = conflict.remoteTodo;
+          await this._setTodos(todos, false);
+        }
+        break;
+
+      case 'keep_both':
+        // Keep both - local stays, add remote as new todo
+        const newTodo: Todo = {
+          ...conflict.remoteTodo,
+          id: `${conflict.remoteTodo.id}-remote-${Date.now()}`,
+        };
+        todos.push(newTodo);
+        await this._setTodos(todos, false);
+        break;
+    }
+
+    // Remove resolved conflict
+    this._conflicts = this._conflicts.filter((c) => c.id !== conflictId);
+    this._postConflicts();
+    this._postTodos();
+  }
+
+  private _resolveAllConflicts(resolution: ConflictResolution): void {
+    const conflictIds = this._conflicts.map((c) => c.id);
+    for (const id of conflictIds) {
+      this._resolveConflict(id, resolution);
     }
   }
 
@@ -660,8 +790,11 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
 
   private async _postAuthState(): Promise<void> {
     if (!this._view) {
+      // Queue update for when view becomes available
+      this._pendingAuthStateUpdate = true;
       return;
     }
+    this._pendingAuthStateUpdate = false;
 
     const devFakeTier = this.auth.devFakeTier;
 
@@ -687,6 +820,34 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
       signedIn: isAuthenticated,
       tier: this.auth.getTier(),
       pending: this.auth.authPending,
+    });
+
+    // Also send user info for the account section
+    if (isAuthenticated && this.auth.user) {
+      this._view.webview.postMessage({
+        type: 'userInfo',
+        email: this.auth.user.email,
+      });
+    }
+  }
+
+  private _postConnectionState(connected: boolean): void {
+    if (!this._view) {
+      return;
+    }
+    this._view.webview.postMessage({
+      type: 'connectionState',
+      connected,
+    });
+  }
+
+  private _postSyncState(syncing: boolean): void {
+    if (!this._view) {
+      return;
+    }
+    this._view.webview.postMessage({
+      type: 'syncState',
+      syncing,
     });
   }
 
@@ -1183,5 +1344,87 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
     vscode.window.showInformationMessage(
       `Sent to terminal: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`
     );
+  }
+
+  // ============================================
+  // GDPR Operations
+  // ============================================
+
+  /**
+   * Export all user data (GDPR Article 20 - Right to Data Portability)
+   */
+  private async _exportUserData(): Promise<void> {
+    if (!this.isPro()) {
+      this._view?.webview.postMessage({
+        type: 'dataExportError',
+        error: 'Export requires Pro subscription',
+      });
+      return;
+    }
+
+    try {
+      const response = await this.api.get<object>('/me/export');
+
+      if (response.ok && response.data) {
+        this._view?.webview.postMessage({
+          type: 'dataExport',
+          data: response.data,
+        });
+      } else {
+        this._view?.webview.postMessage({
+          type: 'dataExportError',
+          error: response.error || 'Failed to export data',
+        });
+      }
+    } catch (err) {
+      console.error('Error exporting data:', err);
+      this._view?.webview.postMessage({
+        type: 'dataExportError',
+        error: err instanceof Error ? err.message : 'Unknown error',
+      });
+    }
+  }
+
+  /**
+   * Delete user account (GDPR Article 17 - Right to Erasure)
+   */
+  private async _deleteUserAccount(): Promise<void> {
+    if (!this.isPro()) {
+      this._view?.webview.postMessage({
+        type: 'deleteAccountError',
+        error: 'Account deletion requires Pro subscription',
+      });
+      return;
+    }
+
+    try {
+      const response = await this.api.delete('/me');
+
+      if (response.ok) {
+        // Clear local tokens and sign out
+        await this.auth.signOut();
+
+        // Notify webview
+        this._view?.webview.postMessage({
+          type: 'deleteAccountSuccess',
+        });
+
+        // Update auth state to show signed out
+        await this._postAuthState();
+
+        vscode.window.showInformationMessage('Your Panel Todo account has been deleted.');
+      } else {
+        this._view?.webview.postMessage({
+          type: 'deleteAccountError',
+          error: response.error || 'Failed to delete account',
+        });
+      }
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      this._view?.webview.postMessage({
+        type: 'deleteAccountError',
+        error: err instanceof Error ? err.message : 'Unknown error',
+      });
+    }
   }
 }

@@ -29,7 +29,7 @@ Panel Todo lives in VS Code's panel—right next to your terminal. Type a task, 
 
 - **Zero friction** - No dialogs, no context switching, no app to open.
 - **Selection to todo** - Highlight Claude's suggestion → `Cmd+Shift+T` → instant task.
-- **AI-native** - 28 MCP tools let Claude manage your backlog directly.
+- **AI-native** - 29 MCP tools let Claude manage your backlog directly.
 - **Always there** - Visible while commands run, builds complete, tests pass.
 
 ---
@@ -62,7 +62,7 @@ Full issue tracking for serious projects:
 | **Sprint Management** | Plan sprints, track velocity, manage backlogs. |
 | **Tags & Labels** | Color-coded tags for categorization. |
 | **Issue Relationships** | blocks, blocked_by, relates_to, duplicates. |
-| **28 MCP Tools** | Claude can manage issues, sprints, projects, and tags directly. |
+| **29 MCP Tools** | Claude can manage issues, sprints, projects, and tags directly. |
 | **Device-Code Auth** | Sign in via browser. No passwords in VS Code. |
 
 ### Pro MCP Commands
@@ -113,13 +113,13 @@ Your AI assistant becomes a project manager:
 | Local todos | Yes | Yes |
 | Selection to todo | Yes | Yes |
 | Export as prompt | Yes | Yes |
-| Local MCP (4 tools) | Yes | Yes |
+| Local MCP (5 tools) | Yes | Yes |
 | Cross-device sync | - | Yes |
 | Multi-project | - | Yes |
 | Issue tracking | - | Yes |
 | Sprints & backlog | - | Yes |
 | Tags & relationships | - | Yes |
-| Remote MCP (28 tools) | - | Yes |
+| Remote MCP (29 tools) | - | Yes |
 | | **Free forever** | **€4.90/month** |
 
 ---

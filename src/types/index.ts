@@ -20,7 +20,7 @@ export const STORAGE_KEYS = {
 
 export const CONFIG = {
   TODO_FILE_NAME: 'panel-todo.json',
-  DEFAULT_API_BASE_URL: 'https://api.paneltodo.com',
+  DEFAULT_API_BASE_URL: 'https://api.panel-todo.com',
   API_BASE_URL_SETTING: 'apiBaseUrl',
   // Stripe Payment Links (TEST MODE)
   STRIPE_PRO_PAYMENT_LINK: 'https://buy.stripe.com/test_00w14o05AfJWaoR18o5sA01',
@@ -39,7 +39,18 @@ export interface Todo {
   id: string;
   text: string;
   createdAt: number;
+  updatedAt?: number;
 }
+
+export interface TodoConflict {
+  id: string;
+  localTodo: Todo;
+  remoteTodo: Todo;
+  localUpdatedAt: number;
+  remoteUpdatedAt: number;
+}
+
+export type ConflictResolution = 'keep_local' | 'keep_remote' | 'keep_both';
 
 // ============================================
 // User & Auth Types

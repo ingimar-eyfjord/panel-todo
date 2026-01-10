@@ -22,6 +22,24 @@ export function activate(context: vscode.ExtensionContext): void {
   );
   context.subscriptions.push(viewRegistration);
 
+  // Register URI handler for deep links (e.g., from success page after checkout)
+  const uriHandler = vscode.window.registerUriHandler({
+    handleUri(uri: vscode.Uri): void {
+      console.log('Panel Todo URI handler:', uri.toString());
+
+      if (uri.path === '/signin' || uri.path === '/signin/') {
+        // Ensure the panel is visible
+        vscode.commands.executeCommand('todoView.focus').then(() => {
+          // Small delay to ensure view is ready
+          setTimeout(() => {
+            provider?.signIn();
+          }, 500);
+        });
+      }
+    }
+  });
+  context.subscriptions.push(uriHandler);
+
   // Register commands
   const commands: Array<{ command: string; handler: () => void }> = [
     {

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import WebSocket from 'ws';
+import { EventEmitter } from 'events';
 import { WebSocketEvent, WebSocketEventType, CONFIG, STORAGE_KEYS } from '../types';
 
 type EventHandler = (event: WebSocketEvent) => void;
@@ -12,6 +13,7 @@ export class WebSocketService {
   private reconnectTimer: NodeJS.Timeout | null = null;
   private eventHandlers: EventHandler[] = [];
   private _isConnected = false;
+  private _connectionEvents = new EventEmitter();
 
   constructor(private context: vscode.ExtensionContext) {}
 
@@ -21,6 +23,20 @@ export class WebSocketService {
 
   get isConnected(): boolean {
     return this._isConnected;
+  }
+
+  /**
+   * Subscribe to connection state changes
+   */
+  onConnectionStateChanged(callback: (connected: boolean) => void): void {
+    this._connectionEvents.on('connectionStateChanged', callback);
+  }
+
+  /**
+   * Unsubscribe from connection state changes
+   */
+  offConnectionStateChanged(callback: (connected: boolean) => void): void {
+    this._connectionEvents.off('connectionStateChanged', callback);
   }
 
   /**
@@ -39,7 +55,7 @@ export class WebSocketService {
 
       this.ws.on('open', () => {
         console.log('WebSocket connected for real-time sync');
-        this._isConnected = true;
+        this.setConnected(true);
       });
 
       this.ws.on('message', (data: WebSocket.Data) => {
@@ -53,7 +69,7 @@ export class WebSocketService {
 
       this.ws.on('close', () => {
         console.log('WebSocket disconnected');
-        this._isConnected = false;
+        this.setConnected(false);
         this.ws = null;
         this.scheduleReconnect();
       });
@@ -81,7 +97,7 @@ export class WebSocketService {
       this.ws = null;
     }
 
-    this._isConnected = false;
+    this.setConnected(false);
   }
 
   /**
@@ -121,6 +137,13 @@ export class WebSocketService {
       } catch (err) {
         console.error('Error in WebSocket event handler:', err);
       }
+    }
+  }
+
+  private setConnected(connected: boolean): void {
+    if (this._isConnected !== connected) {
+      this._isConnected = connected;
+      this._connectionEvents.emit('connectionStateChanged', connected);
     }
   }
 

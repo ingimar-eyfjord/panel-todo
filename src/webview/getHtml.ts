@@ -1987,19 +1987,300 @@ export function getHtml(webview: vscode.Webview): string {
       background: var(--vscode-inputValidation-errorBorder, #be1100);
     }
 
-    /* Send to Terminal button */
+    /* Account Section */
+    .account-section {
+      padding: 8px 0;
+    }
+
+    .account-header {
+      margin-bottom: 16px;
+      font-size: 1em;
+      font-weight: 600;
+    }
+
+    .account-field {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--vscode-panel-border, var(--vscode-input-border));
+    }
+
+    .account-field label {
+      font-size: 0.85em;
+      color: var(--vscode-descriptionForeground);
+    }
+
+    .account-field span {
+      font-weight: 500;
+    }
+
+    .tier-badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      font-weight: 600;
+    }
+
+    .tier-badge.pro {
+      background: rgba(255, 193, 7, 0.15);
+      color: #ffc107;
+    }
+
+    .tier-badge.team {
+      background: rgba(156, 39, 176, 0.15);
+      color: #ce93d8;
+    }
+
+    .offline-indicator {
+      display: none;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75em;
+      font-weight: 500;
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    .offline-indicator.visible {
+      display: inline-block;
+    }
+
+    .sync-indicator {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75em;
+      font-weight: 500;
+      background: rgba(59, 130, 246, 0.15);
+      color: #3b82f6;
+    }
+
+    .sync-indicator.visible {
+      display: inline-flex;
+    }
+
+    .sync-spinner {
+      width: 10px;
+      height: 10px;
+      border: 2px solid rgba(59, 130, 246, 0.3);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Conflict Resolution UI */
+    .conflicts-banner {
+      display: none;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .conflicts-banner.visible {
+      display: block;
+    }
+
+    .conflicts-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .conflicts-title {
+      font-weight: 600;
+      color: #f59e0b;
+      font-size: 0.9em;
+    }
+
+    .conflicts-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .conflict-item {
+      background: var(--vscode-input-background);
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+
+    .conflict-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .conflict-label {
+      font-size: 0.75em;
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .conflict-text {
+      font-size: 0.9em;
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 3px;
+    }
+
+    .conflict-text.local {
+      border-left: 3px solid #3b82f6;
+    }
+
+    .conflict-text.remote {
+      border-left: 3px solid #10b981;
+    }
+
+    .conflict-buttons {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .conflict-btn {
+      padding: 4px 10px;
+      font-size: 0.8em;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .conflict-btn.local {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+    }
+
+    .conflict-btn.local:hover {
+      background: rgba(59, 130, 246, 0.3);
+    }
+
+    .conflict-btn.remote {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+    }
+
+    .conflict-btn.remote:hover {
+      background: rgba(16, 185, 129, 0.3);
+    }
+
+    .conflict-btn.both {
+      background: rgba(139, 92, 246, 0.2);
+      color: #8b5cf6;
+    }
+
+    .conflict-btn.both:hover {
+      background: rgba(139, 92, 246, 0.3);
+    }
+
+    .account-section-title {
+      margin-top: 20px;
+      margin-bottom: 10px;
+      font-size: 0.75em;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--vscode-descriptionForeground);
+      letter-spacing: 0.5px;
+    }
+
+    .account-action {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 6px;
+    }
+
+    .account-action .action-info {
+      flex: 1;
+    }
+
+    .account-action .action-info strong {
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .account-action .action-info p {
+      margin: 0;
+      font-size: 0.85em;
+      color: var(--vscode-descriptionForeground);
+    }
+
+    .account-action.danger-zone {
+      border-color: var(--vscode-inputValidation-errorBorder, #be1100);
+    }
+
+    .account-links {
+      margin-top: 20px;
+      display: flex;
+      gap: 16px;
+    }
+
+    .account-links a {
+      color: var(--vscode-textLink-foreground);
+      font-size: 0.85em;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .account-links a:hover {
+      text-decoration: underline;
+    }
+
+    .button.loading {
+      position: relative;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    /* Delete Account Dialog */
+    .delete-confirm-input {
+      margin-top: 12px;
+    }
+
+    .delete-confirm-input label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.85em;
+    }
+
+    .delete-confirm-input input {
+      width: 100%;
+      padding: 8px;
+      background: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    /* Send to Terminal button - Claude orange */
     .send-to-terminal-btn {
       opacity: 0;
-      background: none;
-      border: none;
-      color: var(--vscode-descriptionForeground);
+      background: rgba(218, 119, 86, 0.15);
+      border: 1px solid #DA7756;
+      color: #DA7756;
       cursor: pointer;
-      padding: 2px 6px;
+      padding: 2px 8px;
       font-size: 0.75em;
       border-radius: 3px;
       transition: opacity 0.15s ease, background 0.15s ease;
       margin-left: auto;
       white-space: nowrap;
+      font-weight: 500;
     }
 
     li:hover .send-to-terminal-btn,
@@ -2008,8 +2289,8 @@ export function getHtml(webview: vscode.Webview): string {
     }
 
     .send-to-terminal-btn:hover {
-      background: var(--vscode-button-secondaryBackground);
-      color: var(--vscode-foreground);
+      background: #DA7756;
+      color: #fff;
     }
 
     /* Trash Drop Zone */
@@ -2192,6 +2473,17 @@ export function getHtml(webview: vscode.Webview): string {
         <button id="auth-copy-btn" class="button secondary">Copy code</button>
       </div>
     </div>
+    <!-- Conflicts Banner -->
+    <div id="conflicts-banner" class="conflicts-banner">
+      <div class="conflicts-header">
+        <span class="conflicts-title">Sync Conflicts</span>
+        <div class="conflicts-actions">
+          <button id="resolve-all-local" class="conflict-btn local">Keep All Local</button>
+          <button id="resolve-all-remote" class="conflict-btn remote">Keep All Remote</button>
+        </div>
+      </div>
+      <div id="conflicts-list"></div>
+    </div>
     <!-- Project Selector (Pro only, shown when multiple projects) -->
     <div id="project-selector" class="project-selector">
       <span class="project-selector-label">Project:</span>
@@ -2200,6 +2492,8 @@ export function getHtml(webview: vscode.Webview): string {
       </select>
       <button id="project-add-btn" class="project-add-btn" title="New Project">+ New Project</button>
       <div class="project-selector-right">
+        <span id="sync-indicator" class="sync-indicator"><span class="sync-spinner"></span>Syncing</span>
+        <span id="offline-indicator" class="offline-indicator">Offline</span>
         <span id="auth-status" class="tier-badge">Pro</span>
         <button id="sign-in-btn" class="button small">Sign in</button>
         <button id="sign-out-btn" class="button secondary small hidden">Sign out</button>
@@ -2225,6 +2519,7 @@ export function getHtml(webview: vscode.Webview): string {
       <button id="tab-todos" class="tab active" data-tab="todos">Todos</button>
       <button id="tab-issues" class="tab" data-tab="issues">Issues</button>
       <button id="tab-kanban" class="tab" data-tab="kanban">Kanban</button>
+      <button id="tab-account" class="tab" data-tab="account">Account</button>
     </div>
 
     <!-- Todos Section -->
@@ -2396,6 +2691,70 @@ export function getHtml(webview: vscode.Webview): string {
       <div id="kanban-empty" class="empty">No issues yet.</div>
     </div>
 
+    <!-- Account Section (Pro only) -->
+    <div id="account-section" class="section hidden">
+      <div class="account-section">
+        <div class="account-header">Account Settings</div>
+
+        <div class="account-field">
+          <label>Email</label>
+          <span id="account-email">-</span>
+        </div>
+        <div class="account-field">
+          <label>Plan</label>
+          <span id="account-tier" class="tier-badge">-</span>
+        </div>
+
+        <div class="account-section-title">Your Data</div>
+
+        <div class="account-action">
+          <div class="action-info">
+            <strong>Export My Data</strong>
+            <p>Download all your data in JSON format</p>
+          </div>
+          <button id="export-data-btn" class="button secondary">Export</button>
+        </div>
+
+        <div class="account-action danger-zone">
+          <div class="action-info">
+            <strong>Delete Account</strong>
+            <p>Permanently delete your account and all data</p>
+          </div>
+          <button id="delete-account-btn" class="button danger">Delete</button>
+        </div>
+
+        <div class="account-links">
+          <a id="privacy-link">Privacy Policy</a>
+          <a id="terms-link">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Account Dialog -->
+    <div id="delete-account-dialog" class="dialog-overlay hidden">
+      <div class="dialog">
+        <div class="dialog-title">Delete Account</div>
+        <div class="dialog-message">
+          <p>This will permanently delete:</p>
+          <ul style="margin: 8px 0; padding-left: 20px;">
+            <li>Your account and profile</li>
+            <li>All projects, issues, and sprints</li>
+            <li>All synced todos</li>
+            <li>Your subscription (will be cancelled)</li>
+          </ul>
+          <p><strong>This action cannot be undone.</strong></p>
+          <div class="delete-confirm-input">
+            <label>Type DELETE to confirm:</label>
+            <input type="text" id="delete-confirm-text" placeholder="DELETE" />
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button id="delete-account-cancel" class="button secondary">Cancel</button>
+          <button id="delete-account-confirm" class="button danger" disabled>Delete My Account</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Issue Detail Panel (shared between Issues and Kanban tabs) -->
     <div id="issue-detail" class="issue-detail">
       <div class="issue-detail-header">
@@ -2478,7 +2837,7 @@ export function getHtml(webview: vscode.Webview): string {
           <strong>Go Pro</strong>
           <span class="upgrade-desc">Projects, issues, sprints, cloud sync</span>
         </div>
-        <button id="upgrade-btn" class="button">Upgrade</button>
+        <button id="upgrade-btn" class="button">Sign up</button>
       </div>
     </div>
 
@@ -2620,6 +2979,12 @@ export function getHtml(webview: vscode.Webview): string {
     const undoBar = document.getElementById("undo-bar");
     const undoBtn = document.getElementById("undo-btn");
     const authStatus = document.getElementById("auth-status");
+    const syncIndicator = document.getElementById("sync-indicator");
+    const offlineIndicator = document.getElementById("offline-indicator");
+    const conflictsBanner = document.getElementById("conflicts-banner");
+    const conflictsList = document.getElementById("conflicts-list");
+    const resolveAllLocal = document.getElementById("resolve-all-local");
+    const resolveAllRemote = document.getElementById("resolve-all-remote");
     const signInBtn = document.getElementById("sign-in-btn");
     const signOutBtn = document.getElementById("sign-out-btn");
     const authPending = document.getElementById("auth-pending");
@@ -2648,9 +3013,23 @@ export function getHtml(webview: vscode.Webview): string {
     const tabTodos = document.getElementById("tab-todos");
     const tabIssues = document.getElementById("tab-issues");
     const tabKanban = document.getElementById("tab-kanban");
+    const tabAccount = document.getElementById("tab-account");
     const todosSection = document.getElementById("todos-section");
     const issuesSection = document.getElementById("issues-section");
     const kanbanSection = document.getElementById("kanban-section");
+    const accountSection = document.getElementById("account-section");
+
+    // Account elements
+    const accountEmail = document.getElementById("account-email");
+    const accountTier = document.getElementById("account-tier");
+    const exportDataBtn = document.getElementById("export-data-btn");
+    const deleteAccountBtn = document.getElementById("delete-account-btn");
+    const privacyLink = document.getElementById("privacy-link");
+    const termsLink = document.getElementById("terms-link");
+    const deleteAccountDialog = document.getElementById("delete-account-dialog");
+    const deleteConfirmText = document.getElementById("delete-confirm-text");
+    const deleteAccountCancel = document.getElementById("delete-account-cancel");
+    const deleteAccountConfirm = document.getElementById("delete-account-confirm");
 
     // Kanban elements
     const kanbanBoard = document.querySelector(".kanban-board");
@@ -2742,6 +3121,7 @@ export function getHtml(webview: vscode.Webview): string {
 
     let undoTimeout = null;
     let currentDevTier = "free";
+    let currentUserEmail = null;
     let currentTab = "todos";
     let issues = [];
     let sprints = [];
@@ -2807,6 +3187,47 @@ export function getHtml(webview: vscode.Webview): string {
       authLink.textContent = pending.verificationUri;
     }
 
+    function renderConnectionState(connected) {
+      offlineIndicator.classList.toggle("visible", !connected);
+    }
+
+    function renderSyncState(syncing) {
+      syncIndicator.classList.toggle("visible", syncing);
+    }
+
+    function renderConflicts(conflicts) {
+      if (!conflicts || conflicts.length === 0) {
+        conflictsBanner.classList.remove("visible");
+        conflictsList.innerHTML = "";
+        return;
+      }
+
+      conflictsBanner.classList.add("visible");
+      conflictsList.innerHTML = conflicts.map(conflict => \`
+        <div class="conflict-item" data-id="\${conflict.id}">
+          <div class="conflict-label">Local (this device)</div>
+          <div class="conflict-text local">\${escapeHtml(conflict.localTodo.text)}</div>
+          <div class="conflict-label">Remote (other device)</div>
+          <div class="conflict-text remote">\${escapeHtml(conflict.remoteTodo.text)}</div>
+          <div class="conflict-buttons">
+            <button class="conflict-btn local" data-action="keep_local">Keep Local</button>
+            <button class="conflict-btn remote" data-action="keep_remote">Keep Remote</button>
+            <button class="conflict-btn both" data-action="keep_both">Keep Both</button>
+          </div>
+        </div>
+      \`).join("");
+
+      // Add event listeners for individual conflict buttons
+      conflictsList.querySelectorAll(".conflict-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          const item = e.target.closest(".conflict-item");
+          const conflictId = item.dataset.id;
+          const resolution = e.target.dataset.action;
+          vscode.postMessage({ type: "resolveConflict", id: conflictId, resolution });
+        });
+      });
+    }
+
     function renderAuthState(state) {
       const signedIn = Boolean(state && state.signedIn);
       const tier = state?.tier || "free";
@@ -2824,22 +3245,34 @@ export function getHtml(webview: vscode.Webview): string {
       signInBtn.classList.toggle("hidden", signedIn || Boolean(state && state.pending));
       signOutBtn.classList.toggle("hidden", !signedIn);
 
-      // Show upgrade prompt for signed-in free users
-      const showUpgrade = signedIn && !isPro;
+      // Show upgrade prompt for signed-out users (Pro users don't need it)
+      const showUpgrade = !isPro;
       upgradePrompt.classList.toggle("visible", showUpgrade);
       document.body.classList.toggle("has-upgrade-prompt", showUpgrade);
+
+      // Update button text based on auth state
+      if (showUpgrade) {
+        upgradeBtn.textContent = "Sign up";
+      }
+
+      // IMPORTANT: Always update currentDevTier (used by renderProjectSelector)
+      currentDevTier = signedIn ? tier : "out";
 
       // Dev toolbar
       if (state?.devMode) {
         devToolbar.classList.add("visible");
         document.body.classList.add("has-dev-toolbar");
-        currentDevTier = signedIn ? tier : "out";
         devButtons.forEach(btn => {
           btn.classList.toggle("active", btn.dataset.tier === currentDevTier);
         });
       } else {
         devToolbar.classList.remove("visible");
         document.body.classList.remove("has-dev-toolbar");
+      }
+
+      // Re-render project selector when tier changes (Pro users need to see it)
+      if (isPro) {
+        renderProjectSelector();
       }
 
       renderAuthPending(state ? state.pending : null);
@@ -2865,14 +3298,33 @@ export function getHtml(webview: vscode.Webview): string {
       tabTodos.classList.toggle("active", tab === "todos");
       tabIssues.classList.toggle("active", tab === "issues");
       tabKanban.classList.toggle("active", tab === "kanban");
+      tabAccount.classList.toggle("active", tab === "account");
       todosSection.classList.toggle("hidden", tab !== "todos");
       issuesSection.classList.toggle("hidden", tab !== "issues");
       kanbanSection.classList.toggle("hidden", tab !== "kanban");
+      accountSection.classList.toggle("hidden", tab !== "account");
 
       // Render kanban when switching to kanban tab
       if (tab === "kanban") {
         renderKanban();
       }
+
+      // Update account info when switching to account tab
+      if (tab === "account") {
+        updateAccountInfo();
+      }
+    }
+
+    function updateAccountInfo() {
+      // Update email display
+      accountEmail.textContent = currentUserEmail || "-";
+
+      // Update tier badge
+      const tier = currentDevTier || "free";
+      accountTier.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
+      accountTier.className = "tier-badge";
+      if (tier === "pro") accountTier.classList.add("pro");
+      if (tier === "team") accountTier.classList.add("team");
     }
 
     // ==================== PROJECT SELECTOR ====================
@@ -2880,13 +3332,19 @@ export function getHtml(webview: vscode.Webview): string {
     function renderProjectSelector() {
       // Show project elements if Pro (for creating projects)
       const isPro = currentDevTier === "pro" || currentDevTier === "team";
-      if (!isPro || projects.length === 0) {
+      if (!isPro) {
         projectSelector.classList.remove("has-projects");
         return;
       }
 
       // Show project elements (always if Pro, to allow creating projects)
       projectSelector.classList.add("has-projects");
+
+      // If no projects yet, show "Create your first project" in dropdown
+      if (projects.length === 0) {
+        projectSelect.innerHTML = '<option value="" disabled selected>Create your first project →</option>';
+        return;
+      }
 
       // Populate dropdown
       projectSelect.innerHTML = "";
@@ -4316,7 +4774,7 @@ export function getHtml(webview: vscode.Webview): string {
         sendBtn.title = "Send this task to the terminal";
         sendBtn.addEventListener("click", (e) => {
           e.stopPropagation();
-          vscode.postMessage({ type: "sendToTerminal", text: todo.text });
+          vscode.postMessage({ type: "sendToTerminal", text: "Todo: " + todo.text });
         });
 
         li.appendChild(checkbox);
@@ -4354,6 +4812,14 @@ export function getHtml(webview: vscode.Webview): string {
       vscode.postMessage({ type: "authCopyCode" });
     });
 
+    resolveAllLocal.addEventListener("click", () => {
+      vscode.postMessage({ type: "resolveAllConflicts", resolution: "keep_local" });
+    });
+
+    resolveAllRemote.addEventListener("click", () => {
+      vscode.postMessage({ type: "resolveAllConflicts", resolution: "keep_remote" });
+    });
+
     upgradeBtn.addEventListener("click", () => {
       vscode.postMessage({ type: "openUpgrade" });
     });
@@ -4374,6 +4840,46 @@ export function getHtml(webview: vscode.Webview): string {
     tabTodos.addEventListener("click", () => switchTab("todos"));
     tabIssues.addEventListener("click", () => switchTab("issues"));
     tabKanban.addEventListener("click", () => switchTab("kanban"));
+    tabAccount.addEventListener("click", () => switchTab("account"));
+
+    // Account event listeners
+    exportDataBtn.addEventListener("click", () => {
+      exportDataBtn.classList.add("loading");
+      exportDataBtn.disabled = true;
+      exportDataBtn.textContent = "Exporting...";
+      vscode.postMessage({ type: "exportData" });
+    });
+
+    deleteAccountBtn.addEventListener("click", () => {
+      deleteAccountDialog.classList.remove("hidden");
+      deleteConfirmText.value = "";
+      deleteAccountConfirm.disabled = true;
+    });
+
+    deleteConfirmText.addEventListener("input", () => {
+      deleteAccountConfirm.disabled = deleteConfirmText.value !== "DELETE";
+    });
+
+    deleteAccountCancel.addEventListener("click", () => {
+      deleteAccountDialog.classList.add("hidden");
+    });
+
+    deleteAccountConfirm.addEventListener("click", () => {
+      if (deleteConfirmText.value === "DELETE") {
+        deleteAccountConfirm.classList.add("loading");
+        deleteAccountConfirm.disabled = true;
+        deleteAccountConfirm.textContent = "Deleting...";
+        vscode.postMessage({ type: "deleteAccount" });
+      }
+    });
+
+    privacyLink.addEventListener("click", () => {
+      vscode.postMessage({ type: "openLink", url: "https://paneltodo.com/privacy" });
+    });
+
+    termsLink.addEventListener("click", () => {
+      vscode.postMessage({ type: "openLink", url: "https://paneltodo.com/terms" });
+    });
 
     // Issue event listeners
     addIssueBtn.addEventListener("click", addIssue);
@@ -4637,6 +5143,15 @@ export function getHtml(webview: vscode.Webview): string {
         case "authState":
           renderAuthState(message);
           break;
+        case "connectionState":
+          renderConnectionState(message.connected);
+          break;
+        case "syncState":
+          renderSyncState(message.syncing);
+          break;
+        case "conflicts":
+          renderConflicts(message.conflicts);
+          break;
         case "focusInput":
           input.focus();
           break;
@@ -4714,6 +5229,51 @@ export function getHtml(webview: vscode.Webview): string {
           renderIssues();
           renderKanban();
           renderBacklogItems();
+          break;
+        case "userInfo":
+          // Update user email for account section
+          currentUserEmail = message.email || null;
+          if (currentTab === "account") {
+            updateAccountInfo();
+          }
+          break;
+        case "dataExport":
+          // Reset export button
+          exportDataBtn.classList.remove("loading");
+          exportDataBtn.disabled = false;
+          exportDataBtn.textContent = "Export";
+          // Trigger download
+          if (message.data) {
+            const blob = new Blob([JSON.stringify(message.data, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "panel-todo-export-" + new Date().toISOString().split("T")[0] + ".json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }
+          break;
+        case "dataExportError":
+          // Reset export button and show error
+          exportDataBtn.classList.remove("loading");
+          exportDataBtn.disabled = false;
+          exportDataBtn.textContent = "Export";
+          break;
+        case "deleteAccountSuccess":
+          // Account deleted - close dialog
+          deleteAccountDialog.classList.add("hidden");
+          deleteAccountConfirm.classList.remove("loading");
+          deleteAccountConfirm.textContent = "Delete My Account";
+          // Switch back to todos (extension will handle sign out)
+          switchTab("todos");
+          break;
+        case "deleteAccountError":
+          // Reset delete button and show error
+          deleteAccountConfirm.classList.remove("loading");
+          deleteAccountConfirm.disabled = false;
+          deleteAccountConfirm.textContent = "Delete My Account";
           break;
       }
     });

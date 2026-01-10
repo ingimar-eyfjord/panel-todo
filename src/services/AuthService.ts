@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { EventEmitter } from 'events';
 import { User, DeviceCodeResponse, AuthTokens, CONFIG, STORAGE_KEYS, UserTier } from '../types';
 import { requestJson, delay } from '../utils';
 
@@ -21,8 +22,23 @@ export class AuthService {
   private _authInProgress = false;
   private _authCancel: CancelToken | null = null;
   private _devFakeTier: UserTier | 'out' | null = CONFIG.DEV_MODE ? 'free' : null;
+  private _events = new EventEmitter();
 
   constructor(private context: vscode.ExtensionContext) {}
+
+  /**
+   * Subscribe to auth state changes
+   */
+  onAuthStateChanged(callback: () => void): void {
+    this._events.on('authStateChanged', callback);
+  }
+
+  /**
+   * Unsubscribe from auth state changes
+   */
+  offAuthStateChanged(callback: () => void): void {
+    this._events.off('authStateChanged', callback);
+  }
 
   // ============================================
   // Public API
@@ -103,6 +119,7 @@ export class AuthService {
     this.cancelAuthFlow();
     await this.clearAuthTokens();
     this._user = null;
+    this._events.emit('authStateChanged');
     vscode.window.showInformationMessage('Signed out of Panel Todo');
   }
 
@@ -117,6 +134,7 @@ export class AuthService {
     }
     this._authInProgress = false;
     this._authPending = null;
+    this._events.emit('authStateChanged');
   }
 
   /**
@@ -284,6 +302,9 @@ export class AuthService {
       expiresAt: Date.now() + expiresIn * 1000,
     };
 
+    // Notify webview of pending auth state
+    this._events.emit('authStateChanged');
+
     const selection = await vscode.window.showInformationMessage(
       `Enter code ${userCode} to link Panel Todo.`,
       'Open Verification Page',
@@ -313,9 +334,10 @@ export class AuthService {
     expiresAt: number;
     cancelToken: CancelToken;
   }): Promise<void> {
-    const { deviceCode, intervalSeconds, expiresAt, cancelToken } = params;
+    const { deviceCode, expiresAt, cancelToken } = params;
     const apiUrl = this.getApiUrl();
-    let intervalMs = Math.max(1000, intervalSeconds * 1000);
+    // Use 2 second polling for better UX (faster than RFC 8628 default of 5s)
+    let intervalMs = 2000;
 
     while (!cancelToken.canceled && Date.now() < expiresAt) {
       let response;
@@ -332,15 +354,19 @@ export class AuthService {
           body: { deviceCode },
         });
       } catch (err) {
-        await this.handleAuthError('Failed to poll auth server');
+        console.error('Poll error:', err);
+        await this.handleAuthError('Failed to poll auth server. Check your internet connection.');
         return;
       }
 
       const data = response.data || {};
+      console.log('Poll response:', JSON.stringify(data));
+
       const accessToken = data.accessToken || data.access_token;
       const refreshToken = data.refreshToken || data.refresh_token;
 
       if (accessToken) {
+        console.log('Got access token, signing in...');
         await this.storeAuthTokens({
           accessToken,
           refreshToken: refreshToken || '',
@@ -349,6 +375,7 @@ export class AuthService {
         this._authInProgress = false;
         this._authCancel = null;
         await this.fetchUserInfo();
+        this._events.emit('authStateChanged');
         vscode.window.showInformationMessage('Panel Todo connected');
         return;
       }
@@ -368,7 +395,7 @@ export class AuthService {
       }
 
       if (errorCode) {
-        await this.handleAuthError(`Auth error: ${errorCode}`);
+        await this.handleAuthError(this.getFriendlyErrorMessage(errorCode));
         return;
       }
 
@@ -389,12 +416,25 @@ export class AuthService {
     this._authPending = null;
     this._authInProgress = false;
     this._authCancel = null;
+    this._events.emit('authStateChanged');
     vscode.window.showErrorMessage(message);
   }
 
   // ============================================
   // Helpers
   // ============================================
+
+  private getFriendlyErrorMessage(errorCode: string): string {
+    const messages: Record<string, string> = {
+      'INVALID_CODE': 'Invalid device code. Please try signing in again.',
+      'EXPIRED_CODE': 'Device code expired. Please try signing in again.',
+      'NO_SUBSCRIPTION': 'No Pro subscription found for this email. Subscribe at paneltodo.com',
+      'USER_NOT_FOUND': 'Account not found. Please subscribe first at paneltodo.com',
+      'INVALID_REFRESH_TOKEN': 'Session expired. Please sign in again.',
+      'STRIPE_ERROR': 'Could not verify subscription. Please try again.',
+    };
+    return messages[errorCode] || `Authentication failed: ${errorCode}`;
+  }
 
   private getApiUrl(): string {
     if (CONFIG.DEV_MODE) {

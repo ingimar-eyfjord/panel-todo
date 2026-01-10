@@ -163,12 +163,4 @@ export class StorageService {
   async setLastSyncTime(timestamp: number): Promise<void> {
     await this.context.globalState.update(STORAGE_KEYS.LAST_SYNC_TIME, timestamp);
   }
-
-  getPendingSync(): string[] {
-    return this.context.globalState.get<string[]>(STORAGE_KEYS.PENDING_SYNC) || [];
-  }
-
-  async setPendingSync(ids: string[]): Promise<void> {
-    await this.context.globalState.update(STORAGE_KEYS.PENDING_SYNC, ids);
-  }
 }

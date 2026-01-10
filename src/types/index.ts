@@ -10,7 +10,6 @@ export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'panelTodo.auth.accessToken',
   REFRESH_TOKEN: 'panelTodo.auth.refreshToken',
   LAST_SYNC_TIME: 'panelTodo.lastSyncTime',
-  PENDING_SYNC: 'panelTodo.pendingSync',
   PROJECT_ID: 'panelTodo.projectId',
 } as const;
 
@@ -366,42 +365,4 @@ export interface RequestOptions {
   headers?: Record<string, string>;
   body?: unknown;
   timeout?: number;
-}
-
-// ============================================
-// Service Interfaces
-// ============================================
-
-export interface IStorageService {
-  getTodos(): Todo[];
-  setTodos(todos: Todo[]): Promise<void>;
-  getAccessToken(): string | undefined;
-  setAccessToken(token: string): Promise<void>;
-  getRefreshToken(): string | undefined;
-  setRefreshToken(token: string): Promise<void>;
-  clearAuthTokens(): Promise<void>;
-  getProjectId(): string | undefined;
-  setProjectId(projectId: string | null): Promise<void>;
-}
-
-export interface IApiService {
-  request<T>(endpoint: string, options?: RequestOptions): Promise<ApiResponse<T>>;
-  getEffectiveApiUrl(): string;
-  getApiHeaders(): Record<string, string>;
-}
-
-export interface IAuthService {
-  signIn(): Promise<boolean>;
-  signOut(): Promise<void>;
-  refreshAccessToken(): Promise<boolean>;
-  fetchUserInfo(): Promise<User | null>;
-  isAuthenticated(): boolean;
-  isPro(): boolean;
-}
-
-export interface IWebSocketService {
-  connect(): void;
-  disconnect(): void;
-  isConnected(): boolean;
-  onEvent(handler: (event: WebSocketEvent) => void): void;
 }

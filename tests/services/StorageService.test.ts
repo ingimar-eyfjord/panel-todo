@@ -294,33 +294,5 @@ describe('StorageService', () => {
         expect(context.globalState.get(STORAGE_KEYS.LAST_SYNC_TIME)).toBe(1700000000000);
       });
     });
-
-    describe('getPendingSync', () => {
-      it('should return empty array when no pending syncs', () => {
-        const pending = storageService.getPendingSync();
-        expect(pending).toEqual([]);
-      });
-
-      it('should return pending sync IDs', () => {
-        context.globalState.setForTest(STORAGE_KEYS.PENDING_SYNC, ['id1', 'id2', 'id3']);
-
-        const pending = storageService.getPendingSync();
-        expect(pending).toEqual(['id1', 'id2', 'id3']);
-      });
-    });
-
-    describe('setPendingSync', () => {
-      it('should store pending sync IDs', async () => {
-        await storageService.setPendingSync(['id1', 'id2']);
-
-        expect(context.globalState.get(STORAGE_KEYS.PENDING_SYNC)).toEqual(['id1', 'id2']);
-      });
-
-      it('should allow empty array', async () => {
-        await storageService.setPendingSync([]);
-
-        expect(context.globalState.get(STORAGE_KEYS.PENDING_SYNC)).toEqual([]);
-      });
-    });
   });
 });

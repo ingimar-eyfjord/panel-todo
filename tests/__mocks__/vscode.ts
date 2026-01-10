@@ -237,6 +237,7 @@ export const window = {
   showInputBox: vi.fn().mockResolvedValue(undefined),
   createWebviewPanel: vi.fn(),
   registerWebviewViewProvider: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+  registerUriHandler: vi.fn().mockReturnValue({ dispose: vi.fn() }),
   createStatusBarItem: vi.fn().mockReturnValue({
     show: vi.fn(),
     hide: vi.fn(),

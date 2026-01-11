@@ -102,6 +102,7 @@ export class AuthService {
     if (CONFIG.DEV_MODE) {
       // In dev mode, just toggle auth state
       this._devFakeTier = this._devFakeTier === 'out' ? 'pro' : 'out';
+      this._events.emit('authStateChanged');
       return;
     }
     await this.startDeviceCodeFlow();
@@ -113,6 +114,7 @@ export class AuthService {
   async signOut(): Promise<void> {
     if (CONFIG.DEV_MODE) {
       this._devFakeTier = 'out';
+      this._events.emit('authStateChanged');
       return;
     }
 

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import { Todo, STORAGE_KEYS, CONFIG } from '../types';
 
 /**
@@ -109,6 +110,23 @@ export class StorageService {
       '.vscode',
       CONFIG.TODO_FILE_NAME
     );
+  }
+
+  // ============================================
+  // Workspace ID (for per-workspace cloud sync)
+  // ============================================
+
+  /**
+   * Get or generate a stable workspace ID for cloud sync isolation
+   * The ID is stored in workspaceState, so it persists across sessions
+   */
+  getWorkspaceId(): string {
+    let id = this.context.workspaceState.get<string>(STORAGE_KEYS.WORKSPACE_ID);
+    if (!id) {
+      id = crypto.randomUUID();
+      this.context.workspaceState.update(STORAGE_KEYS.WORKSPACE_ID, id);
+    }
+    return id;
   }
 
   // ============================================

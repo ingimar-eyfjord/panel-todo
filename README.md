@@ -1,5 +1,7 @@
 # Panel Todo
 
+> **VS Code's AI-native todo list and issue tracker.** Panel-based task capture with 33 MCP tools for Claude, Copilot, and other AI assistants.
+
 **Stop losing Claude's best ideas.**
 
 That suggestion Claude made while you waited for the build? It's gone now. Panel Todo captures every "also consider" and "you might want to" before they vanish—without leaving VS Code.
@@ -29,7 +31,7 @@ Panel Todo lives in VS Code's panel—right next to your terminal. Type a task, 
 
 - **Zero friction** - No dialogs, no context switching, no app to open.
 - **Selection to todo** - Highlight Claude's suggestion → `Cmd+Shift+T` → instant task.
-- **AI-native** - 29 MCP tools let Claude manage your backlog directly.
+- **AI-native** - 33 MCP tools let Claude manage your backlog directly.
 - **Always there** - Visible while commands run, builds complete, tests pass.
 
 ---
@@ -62,7 +64,7 @@ Full issue tracking for serious projects:
 | **Sprint Management** | Plan sprints, track velocity, manage backlogs. |
 | **Tags & Labels** | Color-coded tags for categorization. |
 | **Issue Relationships** | blocks, blocked_by, relates_to, duplicates. |
-| **29 MCP Tools** | Claude can manage issues, sprints, projects, and tags directly. |
+| **33 MCP Tools** | Claude can manage issues, sprints, projects, and tags directly. |
 | **Device-Code Auth** | Sign in via browser. No passwords in VS Code. |
 
 ### Pro MCP Commands
@@ -119,7 +121,7 @@ Your AI assistant becomes a project manager:
 | Issue tracking | - | Yes |
 | Sprints & backlog | - | Yes |
 | Tags & relationships | - | Yes |
-| Remote MCP (29 tools) | - | Yes |
+| Remote MCP (33 tools) | - | Yes |
 | | **Free forever** | **€4.90/month** |
 
 ---
@@ -128,14 +130,14 @@ Your AI assistant becomes a project manager:
 
 **Free tier:** All data stored locally in VS Code's workspace storage. Zero network calls. No accounts. No tracking.
 
-**Pro tier:** End-to-end encrypted sync. Your data is yours. See our [Privacy Policy](https://paneltodo.com/privacy).
+**Pro tier:** End-to-end encrypted sync. Your data is yours. See our [Privacy Policy](https://panel-todo.com/privacy).
 
 ---
 
 ## Links
 
-- [Website](https://paneltodo.com)
-- [Documentation](https://paneltodo.com/docs)
+- [Website](https://panel-todo.com)
+- [Documentation](https://panel-todo.com/docs)
 - [Report an Issue](https://github.com/ingimar-eyfjord/panel-todo/issues)
 - [Changelog](CHANGELOG.md)
 

@@ -43,6 +43,7 @@ interface WebviewMessage {
   issueId?: string;
   sprintId?: string;
   tagId?: string;
+  tokenId?: string;
   projectId?: string;
   updates?: Record<string, unknown>;
   title?: string;
@@ -86,6 +87,10 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
     this.auth = new AuthService(_context);
     this.ws = new WebSocketService(_context);
 
+    // Wire up services for MCP config setup
+    this.auth.setApiService(this.api);
+    this.auth.setStorageService(this.storage);
+
     // Set up file watcher for MCP sync
     this._setupFileWatcher();
 
@@ -102,6 +107,8 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
         await this._postIssues();
         await this._postSprints();
         await this._postTags();
+        // Set up MCP config for seamless MCP integration
+        await this.auth.setupMcpConfig();
       }
     });
 
@@ -188,6 +195,13 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
    */
   openUpgrade(): void {
     vscode.env.openExternal(vscode.Uri.parse(CONFIG.STRIPE_PRO_PAYMENT_LINK));
+  }
+
+  /**
+   * Handle magic link authentication (called from URI handler)
+   */
+  async handleMagicLink(token: string): Promise<void> {
+    await this.auth.handleMagicLink(token);
   }
 
   /**
@@ -579,6 +593,10 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
         }
         break;
 
+      case 'migrateUnassignedTodos':
+        await this._migrateUnassignedTodos();
+        break;
+
       case 'exportData':
         await this._exportUserData();
         break;
@@ -590,6 +608,75 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
       case 'openLink':
         if ((message as { url?: string }).url) {
           vscode.env.openExternal(vscode.Uri.parse((message as { url?: string }).url!));
+        }
+        break;
+
+      // API Token Management (for MCP integration)
+      case 'showTokenNameInput': {
+        // Show VS Code's native input box (prompt() doesn't work in webviews)
+        const name = await vscode.window.showInputBox({
+          prompt: 'Enter a name for this API token',
+          value: 'Panel Todo MCP',
+          placeHolder: 'Token name',
+        });
+        if (name) {
+          const newToken = await this.api.createApiToken(name);
+          if (newToken) {
+            this._view?.webview.postMessage({
+              type: 'apiTokenCreated',
+              token: newToken,
+            });
+            await this._postApiTokens();
+          } else {
+            this._view?.webview.postMessage({
+              type: 'error',
+              error: 'Failed to create API token',
+            });
+          }
+        }
+        break;
+      }
+
+      case 'listApiTokens':
+        await this._postApiTokens();
+        break;
+
+      case 'createApiToken':
+        if (message.name) {
+          console.log('[Panel Todo] Creating API token:', message.name);
+          const newToken = await this.api.createApiToken(message.name);
+          console.log('[Panel Todo] API token result:', newToken ? 'success' : 'failed');
+          if (newToken) {
+            this._view?.webview.postMessage({
+              type: 'apiTokenCreated',
+              token: newToken, // Only shown once!
+            });
+            await this._postApiTokens();
+          } else {
+            console.log('[Panel Todo] Token creation failed, sending error to webview');
+            this._view?.webview.postMessage({
+              type: 'error',
+              error: 'Failed to create API token. Please check you are signed in.',
+            });
+          }
+        }
+        break;
+
+      case 'revokeApiToken':
+        if (message.tokenId) {
+          const revoked = await this.api.revokeApiToken(message.tokenId);
+          if (revoked) {
+            this._view?.webview.postMessage({
+              type: 'apiTokenRevoked',
+              tokenId: message.tokenId,
+            });
+            await this._postApiTokens();
+          } else {
+            this._view?.webview.postMessage({
+              type: 'error',
+              error: 'Failed to revoke API token',
+            });
+          }
         }
         break;
 
@@ -687,6 +774,7 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
 
     try {
       const response = await this.api.post('/sync', {
+        workspaceId: this.storage.getWorkspaceId(),
         todos: syncData,
         lastSyncAt: this.storage.getLastSyncTime() || 0,
       });
@@ -709,15 +797,76 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
     this._postSyncState(true);
 
     try {
-      const response = await this.api.get<{ todos: Todo[] }>('/sync');
-      if (response.ok && response.data?.todos) {
-        await this._setTodos(response.data.todos, true);
+      const workspaceId = this.storage.getWorkspaceId();
+      const response = await this.api.get<{
+        workspaceTodos: Todo[];
+        unassignedTodos: Todo[];
+      }>(`/sync?workspaceId=${encodeURIComponent(workspaceId)}`);
+
+      if (response.ok && response.data) {
+        const { workspaceTodos, unassignedTodos } = response.data;
+        const localTodos = this.storage.getTodos();
+
+        // First-time sync: cloud workspace is empty but we have local todos → migrate them
+        if (workspaceTodos.length === 0 && localTodos.length > 0) {
+          console.log('First sync: migrating', localTodos.length, 'local todos to cloud workspace');
+          await this.api.post('/sync', {
+            workspaceId,
+            todos: localTodos,
+          });
+          // Keep local todos, they're now synced to cloud
+        } else {
+          // Normal sync: use workspace cloud data
+          await this._setTodos(workspaceTodos, true);
+        }
+
+        // Send unassigned todos to webview for legacy migration UI
+        this._postUnassignedTodos(unassignedTodos);
+
         await this.storage.setLastSyncTime(Date.now());
       }
     } catch (err) {
       console.error('Error syncing from cloud:', err);
     } finally {
       this._postSyncState(false);
+    }
+  }
+
+  /**
+   * Post unassigned (legacy) todos to webview for migration UI
+   */
+  private _postUnassignedTodos(unassignedTodos: Todo[]): void {
+    if (!this._view) {
+      return;
+    }
+    this._view.webview.postMessage({
+      type: 'unassignedTodos',
+      todos: unassignedTodos,
+    });
+  }
+
+  /**
+   * Migrate unassigned (legacy) todos to current workspace
+   */
+  private async _migrateUnassignedTodos(): Promise<void> {
+    if (!this.isPro()) {
+      return;
+    }
+
+    try {
+      const workspaceId = this.storage.getWorkspaceId();
+      const response = await this.api.post('/sync/migrate', { workspaceId });
+
+      if (response.ok) {
+        // Re-sync to get updated todos
+        await this._syncFromCloud();
+        vscode.window.showInformationMessage('Todos migrated to this workspace');
+      } else {
+        vscode.window.showErrorMessage('Failed to migrate todos');
+      }
+    } catch (err) {
+      console.error('Error migrating unassigned todos:', err);
+      vscode.window.showErrorMessage('Error migrating todos');
     }
   }
 
@@ -809,10 +958,21 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
       return;
     }
 
-    const isAuthenticated = await this.auth.isAuthenticated();
+    let isAuthenticated = await this.auth.isAuthenticated();
+    console.log('[Panel Todo] _postAuthState: isAuthenticated =', isAuthenticated, 'user =', this.auth.user);
 
     if (isAuthenticated && !this.auth.user) {
-      await this.auth.fetchUserInfo();
+      console.log('[Panel Todo] Tokens exist but no user - fetching user info...');
+      const user = await this.auth.fetchUserInfo();
+      console.log('[Panel Todo] fetchUserInfo returned:', user);
+      // Don't clear tokens on fetch failure - could be transient network error
+      // Tokens are only cleared by AuthService when explicitly invalid (401/400)
+      if (user) {
+        console.log('[Panel Todo] Successfully loaded user info');
+      }
+      // Re-check auth state (tokens may still be valid even if fetch failed)
+      isAuthenticated = await this.auth.isAuthenticated();
+      console.log('[Panel Todo] After token check: isAuthenticated =', isAuthenticated);
     }
 
     this._view.webview.postMessage({
@@ -848,6 +1008,22 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
     this._view.webview.postMessage({
       type: 'syncState',
       syncing,
+    });
+  }
+
+  // ============================================
+  // API Token Operations (for MCP integration)
+  // ============================================
+
+  private async _postApiTokens(): Promise<void> {
+    if (!this._view || !this.isPro()) {
+      return;
+    }
+
+    const tokens = await this.api.listApiTokens();
+    this._view.webview.postMessage({
+      type: 'apiTokens',
+      tokens,
     });
   }
 
@@ -1137,7 +1313,7 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
 
   private async _addTagToIssue(issueId: string, tagId: string): Promise<boolean> {
     try {
-      const response = await this.api.post(`/v1/issues/${issueId}/tags/${tagId}`, {});
+      const response = await this.api.post(`/v1/issues/${issueId}/tags`, { tagId });
       return response.ok;
     } catch (err) {
       console.error('Error adding tag to issue:', err);

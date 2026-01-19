@@ -1,7 +1,7 @@
 {
   "name": "panel-todo",
   "displayName": "Panel Todo",
-  "description": "Minimal panel todo list for AI-assisted coding sessions. Capture tasks while Claude thinks, export as prompts.",
+  "description": "Todo list and issue tracker in VS Code's panel. MCP integration for AI assistants. Cloud sync, sprints, kanban-style project management. Free tier available.",
   "version": "0.3.0",
   "publisher": "local",
   "license": "MIT",
@@ -18,8 +18,7 @@
     "vscode": "^1.80.0"
   },
   "categories": [
-    "Other",
-    "Snippets"
+    "Other"
   ],
   "keywords": [
     "todo",
@@ -28,7 +27,18 @@
     "ai",
     "claude",
     "copilot",
-    "productivity"
+    "productivity",
+    "mcp",
+    "issues",
+    "issue-tracker",
+    "kanban",
+    "backlog",
+    "sprint",
+    "agile",
+    "project-management",
+    "task-management",
+    "checklist",
+    "ai-assistant"
   ],
   "main": "./dist/extension.js",
   "scripts": {

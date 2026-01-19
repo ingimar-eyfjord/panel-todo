@@ -11,6 +11,7 @@ export const STORAGE_KEYS = {
   REFRESH_TOKEN: 'panelTodo.auth.refreshToken',
   LAST_SYNC_TIME: 'panelTodo.lastSyncTime',
   PROJECT_ID: 'panelTodo.projectId',
+  WORKSPACE_ID: 'panelTodo.workspaceId',
 } as const;
 
 // ============================================
@@ -231,6 +232,33 @@ export interface CommentsResponse {
 }
 
 // ============================================
+// API Token Types (Pro Tier)
+// ============================================
+
+export interface ApiToken {
+  id: string;
+  name: string;
+  createdAt: string;
+  lastUsedAt?: string | null;
+}
+
+export interface ApiTokenCreateResponse {
+  id: string;
+  name: string;
+  token: string; // Only returned once at creation!
+  created_at: string;
+}
+
+export interface ApiTokensListResponse {
+  tokens: Array<{
+    id: string;
+    name: string;
+    created_at: string;
+    last_used_at: string | null;
+  }>;
+}
+
+// ============================================
 // WebSocket Event Types
 // ============================================
 
@@ -293,6 +321,10 @@ export type WebviewMessageType =
   | 'signOut'
   | 'openUpgrade'
   | 'openUpgradeYearly'
+  // API Token messages (MCP integration)
+  | 'listApiTokens'
+  | 'createApiToken'
+  | 'revokeApiToken'
   // Dev mode messages
   | 'devSetTier'
   | 'devToggleAuth'
@@ -307,6 +339,7 @@ export interface WebviewMessage {
   issueId?: string;
   sprintId?: string;
   tagId?: string;
+  tokenId?: string; // For API token operations
   projectId?: string;
   updates?: Record<string, unknown>;
   title?: string;
@@ -336,6 +369,9 @@ export type ExtensionMessageType =
   | 'comments'
   | 'authState'
   | 'userInfo'
+  | 'apiTokens'
+  | 'apiTokenCreated'
+  | 'apiTokenRevoked'
   | 'error';
 
 export interface ExtensionMessage {

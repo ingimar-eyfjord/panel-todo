@@ -2240,6 +2240,113 @@ export function getHtml(webview: vscode.Webview): string {
       text-decoration: underline;
     }
 
+    /* MCP Tokens Section */
+    .mcp-tokens-list {
+      margin-bottom: 12px;
+    }
+
+    .mcp-token-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      background: var(--vscode-input-background);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 6px;
+    }
+
+    .mcp-token-info {
+      flex: 1;
+    }
+
+    .mcp-token-name {
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .mcp-token-meta {
+      font-size: 0.8em;
+      color: var(--vscode-descriptionForeground);
+    }
+
+    .mcp-token-revoke {
+      padding: 4px 8px;
+      font-size: 0.8em;
+      background: transparent;
+      color: var(--vscode-errorForeground, #f14c4c);
+      border: 1px solid var(--vscode-errorForeground, #f14c4c);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .mcp-token-revoke:hover {
+      background: rgba(241, 76, 76, 0.1);
+    }
+
+    .mcp-tokens-empty {
+      padding: 12px;
+      text-align: center;
+      color: var(--vscode-descriptionForeground);
+      font-size: 0.9em;
+      background: var(--vscode-input-background);
+      border-radius: 6px;
+    }
+
+    .mcp-token-create-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .mcp-token-create-row input {
+      flex: 1;
+    }
+
+    .mcp-token-create-row button {
+      flex-shrink: 0;
+    }
+
+    .mcp-token-created-banner {
+      display: none;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 6px;
+    }
+
+    .mcp-token-created-banner.visible {
+      display: block;
+    }
+
+    .mcp-token-created-title {
+      font-weight: 600;
+      color: #10b981;
+      margin-bottom: 8px;
+    }
+
+    .mcp-token-created-value {
+      font-family: var(--vscode-editor-font-family);
+      font-size: 0.85em;
+      padding: 8px;
+      background: var(--vscode-input-background);
+      border-radius: 4px;
+      word-break: break-all;
+      margin-bottom: 8px;
+    }
+
+    .mcp-token-created-warning {
+      font-size: 0.8em;
+      color: var(--vscode-descriptionForeground);
+    }
+
+    .mcp-token-created-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
     .button.loading {
       position: relative;
       pointer-events: none;
@@ -2440,6 +2547,61 @@ export function getHtml(webview: vscode.Webview): string {
       display: flex;
     }
 
+    /* Unassigned todos section (for migrating legacy cloud todos) */
+    .unassigned-section {
+      display: none;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--vscode-panel-border, var(--vscode-input-border));
+    }
+
+    .unassigned-section.visible {
+      display: block;
+    }
+
+    .unassigned-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .unassigned-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85em;
+      color: var(--vscode-descriptionForeground);
+    }
+
+    .unassigned-title-icon {
+      font-size: 1em;
+    }
+
+    .unassigned-migrate-btn {
+      padding: 4px 10px;
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 4px;
+      background: transparent;
+      color: var(--vscode-foreground);
+      font-size: 0.8em;
+      cursor: pointer;
+    }
+
+    .unassigned-migrate-btn:hover {
+      background: var(--vscode-button-secondaryHoverBackground);
+      border-color: var(--vscode-focusBorder);
+    }
+
+    .unassigned-list {
+      opacity: 0.7;
+    }
+
+    .unassigned-list li {
+      background: var(--vscode-input-background);
+      border: 1px dashed var(--vscode-input-border);
+    }
+
     .undo-btn {
       background: transparent;
       border: 1px solid var(--vscode-button-border, var(--vscode-foreground));
@@ -2535,6 +2697,18 @@ export function getHtml(webview: vscode.Webview): string {
       </div>
       <div id="empty" class="empty">No todos yet. Add one above.</div>
       <ul id="list"></ul>
+
+      <!-- Unassigned todos (legacy cloud todos without workspace) -->
+      <div id="unassigned-section" class="unassigned-section">
+        <div class="unassigned-header">
+          <div class="unassigned-title">
+            <span class="unassigned-title-icon">📦</span>
+            <span>Unassigned Todos</span>
+          </div>
+          <button id="migrate-btn" class="unassigned-migrate-btn">Move to workspace</button>
+        </div>
+        <ul id="unassigned-list" class="unassigned-list"></ul>
+      </div>
     </div>
 
     <!-- Issues Section (Pro only) -->
@@ -2703,6 +2877,32 @@ export function getHtml(webview: vscode.Webview): string {
         <div class="account-field">
           <label>Plan</label>
           <span id="account-tier" class="tier-badge">-</span>
+        </div>
+
+        <div class="account-section-title">MCP Tokens</div>
+        <p style="font-size: 0.85em; color: var(--vscode-descriptionForeground); margin-bottom: 12px;">
+          API tokens for Claude Code and other MCP clients
+        </p>
+
+        <div id="mcp-token-created-banner" class="mcp-token-created-banner">
+          <div class="mcp-token-created-title">Token Created!</div>
+          <div id="mcp-token-created-value" class="mcp-token-created-value"></div>
+          <div class="mcp-token-created-warning">
+            Copy this token now. You won't be able to see it again.
+          </div>
+          <div class="mcp-token-created-actions">
+            <button id="copy-new-token-btn" class="button">Copy Token</button>
+            <button id="dismiss-new-token-btn" class="button secondary">Done</button>
+          </div>
+        </div>
+
+        <div id="mcp-tokens-list" class="mcp-tokens-list">
+          <div class="mcp-tokens-empty">No API tokens yet</div>
+        </div>
+
+        <div class="mcp-token-create-row">
+          <input type="text" id="token-name-input" class="todo-input" placeholder="Token name" value="Panel Todo MCP" />
+          <button id="create-token-btn" class="button">Create</button>
         </div>
 
         <div class="account-section-title">Your Data</div>
@@ -2976,6 +3176,9 @@ export function getHtml(webview: vscode.Webview): string {
     const addBtn = document.getElementById("add-btn");
     const list = document.getElementById("list");
     const empty = document.getElementById("empty");
+    const unassignedSection = document.getElementById("unassigned-section");
+    const unassignedList = document.getElementById("unassigned-list");
+    const migrateBtn = document.getElementById("migrate-btn");
     const undoBar = document.getElementById("undo-bar");
     const undoBtn = document.getElementById("undo-btn");
     const authStatus = document.getElementById("auth-status");
@@ -3030,6 +3233,15 @@ export function getHtml(webview: vscode.Webview): string {
     const deleteConfirmText = document.getElementById("delete-confirm-text");
     const deleteAccountCancel = document.getElementById("delete-account-cancel");
     const deleteAccountConfirm = document.getElementById("delete-account-confirm");
+
+    // MCP Token elements
+    const mcpTokensList = document.getElementById("mcp-tokens-list");
+    const tokenNameInput = document.getElementById("token-name-input");
+    const createTokenBtn = document.getElementById("create-token-btn");
+    const mcpTokenCreatedBanner = document.getElementById("mcp-token-created-banner");
+    const mcpTokenCreatedValue = document.getElementById("mcp-token-created-value");
+    const copyNewTokenBtn = document.getElementById("copy-new-token-btn");
+    const dismissNewTokenBtn = document.getElementById("dismiss-new-token-btn");
 
     // Kanban elements
     const kanbanBoard = document.querySelector(".kanban-board");
@@ -3312,6 +3524,8 @@ export function getHtml(webview: vscode.Webview): string {
       // Update account info when switching to account tab
       if (tab === "account") {
         updateAccountInfo();
+        // Fetch API tokens for MCP section
+        vscode.postMessage({ type: "listApiTokens" });
       }
     }
 
@@ -3428,6 +3642,43 @@ export function getHtml(webview: vscode.Webview): string {
     });
 
     // ==================== END PROJECT SELECTOR ====================
+
+    // ==================== API TOKEN RENDERING ====================
+
+    function renderApiTokens(tokens) {
+      if (!mcpTokensList) return;
+
+      if (!tokens || tokens.length === 0) {
+        mcpTokensList.innerHTML = '<div class="mcp-tokens-empty">No API tokens yet</div>';
+        return;
+      }
+
+      mcpTokensList.innerHTML = tokens.map(token => {
+        const createdDate = new Date(token.createdAt).toLocaleDateString();
+        const lastUsed = token.lastUsedAt
+          ? new Date(token.lastUsedAt).toLocaleDateString()
+          : "Never";
+
+        return \`
+          <div class="mcp-token-item" data-token-id="\${token.id}">
+            <div class="mcp-token-info">
+              <div class="mcp-token-name">\${escapeHtml(token.name)}</div>
+              <div class="mcp-token-meta">Created \${createdDate} · Last used: \${lastUsed}</div>
+            </div>
+            <button class="mcp-token-revoke" onclick="revokeToken('\${token.id}')">Revoke</button>
+          </div>
+        \`;
+      }).join("");
+    }
+
+    // Global function for revoking tokens (called from onclick)
+    window.revokeToken = function(tokenId) {
+      if (confirm("Revoke this API token? Any MCP clients using it will stop working.")) {
+        vscode.postMessage({ type: "revokeApiToken", tokenId });
+      }
+    };
+
+    // ==================== END API TOKEN RENDERING ====================
 
     function renderIssues() {
       // Get filtered issues based on sprint selection
@@ -4784,6 +5035,36 @@ export function getHtml(webview: vscode.Webview): string {
       });
     }
 
+    /**
+     * Render unassigned (legacy) todos that need to be migrated to workspace
+     */
+    function renderUnassignedTodos(todos) {
+      unassignedList.textContent = "";
+
+      if (!todos || todos.length === 0) {
+        unassignedSection.classList.remove("visible");
+        return;
+      }
+
+      unassignedSection.classList.add("visible");
+
+      todos.forEach((todo) => {
+        const li = document.createElement("li");
+
+        const label = document.createElement("label");
+        label.textContent = todo.text;
+        label.style.cursor = "default";
+
+        li.appendChild(label);
+        unassignedList.appendChild(li);
+      });
+    }
+
+    // Migrate button click handler
+    migrateBtn.addEventListener("click", () => {
+      vscode.postMessage({ type: "migrateUnassignedTodos" });
+    });
+
     function addTodo() {
       const text = sanitizeInput(input.value, 500);
       if (!text) {
@@ -4874,11 +5155,45 @@ export function getHtml(webview: vscode.Webview): string {
     });
 
     privacyLink.addEventListener("click", () => {
-      vscode.postMessage({ type: "openLink", url: "https://paneltodo.com/privacy" });
+      vscode.postMessage({ type: "openLink", url: "https://panel-todo.com/privacy" });
     });
 
     termsLink.addEventListener("click", () => {
-      vscode.postMessage({ type: "openLink", url: "https://paneltodo.com/terms" });
+      vscode.postMessage({ type: "openLink", url: "https://panel-todo.com/terms" });
+    });
+
+    // MCP Token event listeners
+    createTokenBtn.addEventListener("click", () => {
+      const name = tokenNameInput.value.trim();
+      if (!name) {
+        tokenNameInput.focus();
+        return;
+      }
+      createTokenBtn.disabled = true;
+      createTokenBtn.textContent = "Creating...";
+      vscode.postMessage({ type: "createApiToken", name });
+    });
+
+    tokenNameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        createTokenBtn.click();
+      }
+    });
+
+    copyNewTokenBtn.addEventListener("click", () => {
+      const token = mcpTokenCreatedValue.textContent;
+      if (token) {
+        navigator.clipboard.writeText(token);
+        copyNewTokenBtn.textContent = "Copied!";
+        setTimeout(() => {
+          copyNewTokenBtn.textContent = "Copy Token";
+        }, 2000);
+      }
+    });
+
+    dismissNewTokenBtn.addEventListener("click", () => {
+      mcpTokenCreatedBanner.classList.remove("visible");
+      mcpTokenCreatedValue.textContent = "";
     });
 
     // Issue event listeners
@@ -5140,6 +5455,9 @@ export function getHtml(webview: vscode.Webview): string {
         case "todos":
           render(message.todos);
           break;
+        case "unassignedTodos":
+          renderUnassignedTodos(message.todos);
+          break;
         case "authState":
           renderAuthState(message);
           break;
@@ -5274,6 +5592,35 @@ export function getHtml(webview: vscode.Webview): string {
           deleteAccountConfirm.classList.remove("loading");
           deleteAccountConfirm.disabled = false;
           deleteAccountConfirm.textContent = "Delete My Account";
+          break;
+
+        // MCP Token messages
+        case "apiTokens":
+          renderApiTokens(message.tokens || []);
+          break;
+        case "apiTokenCreated":
+          // Reset create button and input
+          createTokenBtn.disabled = false;
+          createTokenBtn.textContent = "Create";
+          tokenNameInput.value = "Panel Todo MCP";
+          // Show the created token banner
+          if (message.token) {
+            mcpTokenCreatedValue.textContent = message.token;
+            mcpTokenCreatedBanner.classList.add("visible");
+          }
+          break;
+        case "apiTokenRevoked":
+          // Token was revoked, list will be refreshed by apiTokens message
+          break;
+        case "error":
+          // Show error message and reset any loading states
+          if (message.error) {
+            // Reset token create button if it was loading
+            createTokenBtn.disabled = false;
+            createTokenBtn.textContent = "Create";
+            // Show the error (could be enhanced with a toast later)
+            alert(message.error);
+          }
           break;
       }
     });

@@ -22,15 +22,28 @@ export function activate(context: vscode.ExtensionContext): void {
   );
   context.subscriptions.push(viewRegistration);
 
-  // Register URI handler for deep links (e.g., from success page after checkout)
+  // Register URI handler for deep links (magic link auth, checkout callbacks)
   const uriHandler = vscode.window.registerUriHandler({
     handleUri(uri: vscode.Uri): void {
       console.log('Panel Todo URI handler:', uri.toString());
 
+      // Handle magic link authentication: vscode://paneltodo/auth?token=XXX
+      if (uri.path === '/auth' || uri.path === '/auth/') {
+        const token = new URLSearchParams(uri.query).get('token');
+        if (token) {
+          // Bring VS Code to focus and handle the magic link
+          vscode.commands.executeCommand('todoView.focus').then(() => {
+            provider?.handleMagicLink(token);
+          });
+        } else {
+          vscode.window.showErrorMessage('Invalid sign-in link. Please try again.');
+        }
+        return;
+      }
+
+      // Legacy: handle /signin for backwards compatibility
       if (uri.path === '/signin' || uri.path === '/signin/') {
-        // Ensure the panel is visible
         vscode.commands.executeCommand('todoView.focus').then(() => {
-          // Small delay to ensure view is ready
           setTimeout(() => {
             provider?.signIn();
           }, 500);

@@ -34,28 +34,37 @@ export async function requestJson<T = unknown>(
 
   // Use fetch if available (VS Code 1.80+ has it)
   if (typeof fetch === 'function') {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        Accept: 'application/json',
-        ...(body ? { 'Content-Type': 'application/json' } : {}),
-        ...headers,
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Accept: 'application/json',
+          ...(body ? { 'Content-Type': 'application/json' } : {}),
+          ...headers,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
 
-    const text = await response.text();
-    let data: T | null = null;
+      const text = await response.text();
+      let data: T | null = null;
 
-    if (text) {
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = text as unknown as T;
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = text as unknown as T;
+        }
       }
-    }
 
-    return { ok: response.ok, status: response.status, data: data ?? undefined };
+      return { ok: response.ok, status: response.status, data: data ?? undefined };
+    } catch (fetchError) {
+      // fetch failed (network error, DNS issue, etc.) - fall back to Node.js http/https
+      console.log('[requestJson] fetch failed, falling back to Node.js http:', {
+        url,
+        method,
+        error: fetchError instanceof Error ? fetchError.message : String(fetchError),
+      });
+    }
   }
 
   // Fallback to Node.js http/https

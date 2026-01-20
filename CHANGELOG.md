@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-01-20
+
+### Changed
+- **Production release**: First stable version
+- Version bump from 0.4.0 to 1.0.0
+
+### Notes
+- All features from 0.4.0 included
+- MCP server now available on npm: `panel-todo-mcp`
+
 ## [0.4.0] - 2026-01-09
 
 ### Added
@@ -82,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.0.0 | 2026-01-20 | Production release, MCP server on npm |
 | 0.4.0 | 2026-01-09 | Tag management, filtering, compact UI |
 | 0.3.0 | 2026-01-05 | Inline editing, undo delete, todo count badge |
 | 0.2.0 | 2026-01-04 | Selection-to-todo, export as prompt, keyboard shortcuts |
@@ -98,6 +109,6 @@ This is the initial release. No upgrade steps required.
 
 ## Links
 
-- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=your-publisher.panel-todo)
-- [GitHub Repository](https://github.com/youruser/panel-todo)
-- [Documentation](docs/index.md)
+- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=IngimarEyfjord.panel-todo)
+- [GitHub Repository](https://github.com/ingimar-eyfjord/panel-todo)
+- [Documentation](https://panel-todo.com)

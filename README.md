@@ -1,6 +1,6 @@
 # Panel Todo
 
-> **VS Code's AI-native todo list and issue tracker.** Panel-based task capture with 33 MCP tools for Claude, Copilot, and other AI assistants.
+> **VS Code's AI-native todo list and issue tracker.** Panel-based task capture with 38 MCP tools for Claude, Copilot, and other AI assistants.
 
 **Stop losing Claude's best ideas.**
 
@@ -31,7 +31,7 @@ Panel Todo lives in VS Code's panel—right next to your terminal. Type a task, 
 
 - **Zero friction** - No dialogs, no context switching, no app to open.
 - **Selection to todo** - Highlight Claude's suggestion → `Cmd+Shift+T` → instant task.
-- **AI-native** - 33 MCP tools let Claude manage your backlog directly.
+- **AI-native** - 38 MCP tools let Claude manage your backlog directly.
 - **Always there** - Visible while commands run, builds complete, tests pass.
 
 ---
@@ -48,7 +48,7 @@ Everything you need for fast task capture:
 | **Export as Prompt** | `Cmd+Shift+E` copies todos as markdown for AI context. |
 | **Per-Workspace** | Each project keeps its own list. |
 | **Works Offline** | Zero network calls. All data stays local. |
-| **Local MCP** | Claude can add, list, and complete your todos. |
+| **Local MCP** | Claude can add, list, and complete your todos. [Setup guide](https://panel-todo.com/docs/installing-mcp-server) |
 
 ---
 
@@ -64,7 +64,7 @@ Full issue tracking for serious projects:
 | **Sprint Management** | Plan sprints, track velocity, manage backlogs. |
 | **Tags & Labels** | Color-coded tags for categorization. |
 | **Issue Relationships** | blocks, blocked_by, relates_to, duplicates. |
-| **33 MCP Tools** | Claude can manage issues, sprints, projects, and tags directly. |
+| **38 MCP Tools** | Claude can manage issues, sprints, projects, and tags directly. |
 | **Device-Code Auth** | Sign in via browser. No passwords in VS Code. |
 
 ### Pro MCP Commands
@@ -121,14 +121,14 @@ Your AI assistant becomes a project manager:
 | Issue tracking | - | Yes |
 | Sprints & backlog | - | Yes |
 | Tags & relationships | - | Yes |
-| Remote MCP (33 tools) | - | Yes |
+| Remote MCP (38 tools) | - | Yes |
 | | **Free forever** | **€4.90/month** |
 
 ---
 
 ## Your Data
 
-**Free tier:** All data stored locally in VS Code's workspace storage. Zero network calls. No accounts. No tracking.
+**Free tier:** All data stored locally in VS Code's workspace storage. [Learn more](https://panel-todo.com/docs/where-local-todos-stored). Zero network calls. No accounts. No tracking.
 
 **Pro tier:** End-to-end encrypted sync. Your data is yours. See our [Privacy Policy](https://panel-todo.com/privacy).
 

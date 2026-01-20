@@ -2449,6 +2449,17 @@ export function getHtml(webview: vscode.Webview): string {
       font-family: var(--vscode-editor-font-family);
     }
 
+    .help-link {
+      color: var(--vscode-textLink-foreground);
+      text-decoration: none;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+
+    .help-link:hover {
+      text-decoration: underline;
+    }
+
     .input-row {
       display: flex;
       gap: 8px;
@@ -2686,7 +2697,7 @@ export function getHtml(webview: vscode.Webview): string {
 
     <!-- Todos Section -->
     <div id="todos-section" class="section">
-      <div class="todos-explainer">Todos are saved in your project's <code>.vscode</code> folder</div>
+      <div class="todos-explainer">Todos are saved in your project's <code>.vscode</code> folder <a id="todos-help-link" class="help-link">Learn more</a></div>
       <div class="input-row">
         <input id="todo-input" type="text" placeholder="Add a todo and press Enter" />
         <button id="add-btn" title="Add">+</button>
@@ -2881,7 +2892,7 @@ export function getHtml(webview: vscode.Webview): string {
 
         <div class="account-section-title">MCP Tokens</div>
         <p style="font-size: 0.85em; color: var(--vscode-descriptionForeground); margin-bottom: 12px;">
-          API tokens for Claude Code and other MCP clients
+          API tokens for Claude Code and other MCP clients. <a id="mcp-setup-link" class="help-link">Setup guide</a>
         </p>
 
         <div id="mcp-token-created-banner" class="mcp-token-created-banner">
@@ -2924,6 +2935,7 @@ export function getHtml(webview: vscode.Webview): string {
         </div>
 
         <div class="account-links">
+          <a id="docs-link">Documentation</a>
           <a id="privacy-link">Privacy Policy</a>
           <a id="terms-link">Terms of Service</a>
         </div>
@@ -3229,6 +3241,9 @@ export function getHtml(webview: vscode.Webview): string {
     const deleteAccountBtn = document.getElementById("delete-account-btn");
     const privacyLink = document.getElementById("privacy-link");
     const termsLink = document.getElementById("terms-link");
+    const docsLink = document.getElementById("docs-link");
+    const todosHelpLink = document.getElementById("todos-help-link");
+    const mcpSetupLink = document.getElementById("mcp-setup-link");
     const deleteAccountDialog = document.getElementById("delete-account-dialog");
     const deleteConfirmText = document.getElementById("delete-confirm-text");
     const deleteAccountCancel = document.getElementById("delete-account-cancel");
@@ -5160,6 +5175,18 @@ export function getHtml(webview: vscode.Webview): string {
 
     termsLink.addEventListener("click", () => {
       vscode.postMessage({ type: "openLink", url: "https://panel-todo.com/terms" });
+    });
+
+    docsLink.addEventListener("click", () => {
+      vscode.postMessage({ type: "openLink", url: "https://panel-todo.com/docs" });
+    });
+
+    todosHelpLink.addEventListener("click", () => {
+      vscode.postMessage({ type: "openLink", url: "https://panel-todo.com/docs/where-local-todos-stored" });
+    });
+
+    mcpSetupLink.addEventListener("click", () => {
+      vscode.postMessage({ type: "openLink", url: "https://panel-todo.com/docs/installing-mcp-server" });
     });
 
     // MCP Token event listeners

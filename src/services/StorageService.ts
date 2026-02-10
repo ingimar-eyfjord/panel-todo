@@ -155,18 +155,18 @@ export class StorageService {
   }
 
   // ============================================
-  // Project Storage (globalState)
+  // Project Storage (workspaceState - per-workspace)
   // ============================================
 
   getProjectId(): string | undefined {
-    return this.context.globalState.get<string>(STORAGE_KEYS.PROJECT_ID);
+    return this.context.workspaceState.get<string>(STORAGE_KEYS.PROJECT_ID);
   }
 
   async setProjectId(projectId: string | null): Promise<void> {
     if (projectId) {
-      await this.context.globalState.update(STORAGE_KEYS.PROJECT_ID, projectId);
+      await this.context.workspaceState.update(STORAGE_KEYS.PROJECT_ID, projectId);
     } else {
-      await this.context.globalState.update(STORAGE_KEYS.PROJECT_ID, undefined);
+      await this.context.workspaceState.update(STORAGE_KEYS.PROJECT_ID, undefined);
     }
   }
 

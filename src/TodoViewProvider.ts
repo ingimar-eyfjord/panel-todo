@@ -127,7 +127,8 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
   }
 
   getAllTodos(): Todo[] {
-    return this._getTodos();
+    // Return only active (non-completed) todos for external callers
+    return this._getTodos().filter((t) => !t.completed);
   }
 
   focusInput(): void {
@@ -144,7 +145,17 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
     }
 
     const todos = this._getTodos();
-    todos.push(this._lastDeleted);
+    // Check if this was a completed todo (undo completion)
+    const existingIndex = todos.findIndex((t) => t.id === this._lastDeleted!.id);
+    if (existingIndex !== -1) {
+      // Todo still exists (was completed, not removed) - mark as not completed
+      todos[existingIndex].completed = false;
+      todos[existingIndex].updatedAt = Date.now();
+    } else {
+      // Todo was actually removed - restore it
+      const restored = { ...this._lastDeleted, completed: false };
+      todos.push(restored);
+    }
     await this._setTodos(todos);
     this._lastDeleted = null;
     vscode.window.showInformationMessage('Todo restored');
@@ -180,7 +191,8 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
    * Export all todos as a markdown prompt and copy to clipboard
    */
   async exportTodosAsPrompt(): Promise<void> {
-    const todos = this._getTodos();
+    // Only export active (non-completed) todos
+    const todos = this._getTodos().filter((t) => !t.completed);
     if (todos.length === 0) {
       vscode.window.showInformationMessage('No todos to export');
       return;
@@ -306,6 +318,12 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
       case 'remove':
         if (message.id) {
           await this._removeTodo(message.id);
+        }
+        break;
+
+      case 'toggle':
+        if (message.id) {
+          await this._toggleTodo(message.id);
         }
         break;
 
@@ -723,6 +741,19 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
+  private async _toggleTodo(id: string): Promise<void> {
+    const todos = this._getTodos();
+    const todo = todos.find((t) => t.id === id);
+    if (todo) {
+      // Store for undo (before marking complete)
+      this._lastDeleted = { ...todo };
+      // Mark as completed
+      todo.completed = true;
+      todo.updatedAt = Date.now();
+      await this._setTodos(todos);
+    }
+  }
+
   private async _editTodo(id: string, text: string): Promise<void> {
     const todos = this._getTodos();
     const todo = todos.find((t) => t.id === id);
@@ -734,9 +765,11 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
 
   private _postTodos(): void {
     if (this._view) {
+      // Filter out completed todos - they stay in storage for sync but don't show in UI
+      const activeTodos = this._getTodos().filter((t) => !t.completed);
       this._view.webview.postMessage({
         type: 'todos',
-        todos: this._getTodos(),
+        todos: activeTodos,
       });
     }
   }
@@ -766,9 +799,9 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
     const syncData = todos.map((todo) => ({
       id: todo.id,
       text: todo.text,
-      completed: false,
+      completed: todo.completed || false,
       createdAt: todo.createdAt || Date.now(),
-      updatedAt: todo.createdAt || Date.now(),
+      updatedAt: todo.updatedAt || todo.createdAt || Date.now(),
       deletedAt: null,
     }));
 
@@ -1412,6 +1445,7 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
       type: 'projects',
       projects,
       currentProject,
+      currentProjectId,
     });
   }
 

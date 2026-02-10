@@ -5025,7 +5025,7 @@ export function getHtml(webview: vscode.Webview): string {
         checkbox.type = "checkbox";
         checkbox.setAttribute("aria-label", "Complete todo");
         checkbox.addEventListener("change", () => {
-          vscode.postMessage({ type: "remove", id: todo.id });
+          vscode.postMessage({ type: "toggle", id: todo.id });
           showUndoBar();
         });
 

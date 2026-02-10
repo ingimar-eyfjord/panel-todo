@@ -6,7 +6,7 @@
 
 That suggestion Claude made while you waited for the build? It's gone now. Panel Todo captures every "also consider" and "you might want to" before they vanish—without leaving VS Code.
 
-![Panel Todo Demo](media/demo.gif)
+![Panel Todo Demo](https://raw.githubusercontent.com/ingimar-eyfjord/panel-todo/main/media/demo.gif)
 
 ## The Problem
 

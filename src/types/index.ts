@@ -40,6 +40,7 @@ export interface Todo {
   text: string;
   createdAt: number;
   updatedAt?: number;
+  completed?: boolean;
 }
 
 export interface TodoConflict {

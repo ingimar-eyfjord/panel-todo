@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-02-10
+
+### Fixed
+- **Completed todos reappearing after restart**: When signed in to Pro, checking off a todo now properly syncs the completion status to the backend. Previously, completed todos would reappear after restarting VS Code because the backend was never informed of the completion.
+- **Project switching not working**: Fixed field name mismatch between extension and webview that caused project selector to always revert to the previous project.
+- **README demo GIF not displaying**: Changed from relative path to absolute GitHub URL so the demo GIF displays correctly on VS Code Marketplace.
+
+### Changed
+- Todos now use soft-delete with `completed` flag instead of hard deletion, enabling proper sync state tracking.
+
+## [1.0.1] - 2026-01-20
+
+### Fixed
+- Minor bug fixes
+
 ## [1.0.0] - 2026-01-20
 
 ### Changed
@@ -92,6 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.0.2 | 2026-02-10 | Fix completed todos reappearing, project switching, README GIF |
+| 1.0.1 | 2026-01-20 | Minor bug fixes |
 | 1.0.0 | 2026-01-20 | Production release, MCP server on npm |
 | 0.4.0 | 2026-01-09 | Tag management, filtering, compact UI |
 | 0.3.0 | 2026-01-05 | Inline editing, undo delete, todo count badge |

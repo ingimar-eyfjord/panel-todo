@@ -850,7 +850,9 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
           // Keep local todos, they're now synced to cloud
         } else {
           // Normal sync: use workspace cloud data
-          await this._setTodos(workspaceTodos, true);
+          // Defensive filter: exclude any completed items from server response
+          const activeTodos = workspaceTodos.filter((t: Todo) => !t.completed);
+          await this._setTodos(activeTodos, true);
         }
 
         // Send unassigned todos to webview for legacy migration UI

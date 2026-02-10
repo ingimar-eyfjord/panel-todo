@@ -57,6 +57,7 @@ interface WebviewMessage {
   moveToBacklog?: boolean;
   moveIncomplete?: boolean;
   resolution?: ConflictResolution;
+  opId?: string; // Operation ID for ACK-based resilience
 }
 
 /**
@@ -74,6 +75,7 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
   private _syncDebounceTimer: NodeJS.Timeout | null = null;
   private _disposed = false;
   private _pendingAuthStateUpdate = false;
+  private _localChangeInProgress = false; // Prevent cloud sync from overwriting local changes
 
   // Services
   private storage: StorageService;
@@ -138,9 +140,13 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  async undoDelete(): Promise<void> {
+  async undoDelete(opId?: string): Promise<void> {
     if (!this._lastDeleted) {
       vscode.window.showInformationMessage('Nothing to undo');
+      // Still send ACK even if nothing to undo, to clear pending operation
+      if (opId) {
+        this._view?.webview.postMessage({ type: 'undoAck', opId });
+      }
       return;
     }
 
@@ -159,6 +165,12 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
     await this._setTodos(todos);
     this._lastDeleted = null;
     vscode.window.showInformationMessage('Todo restored');
+
+    // Send ACK back to webview to clear pending operation
+    if (opId) {
+      this._view?.webview.postMessage({ type: 'undoAck', opId });
+      console.log('[Panel Todo] undoDelete sent ACK for opId:', opId);
+    }
   }
 
   canUndo(): boolean {
@@ -270,10 +282,11 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
     // Handle messages from webview with error boundary
     webviewView.webview.onDidReceiveMessage(
       async (message: WebviewMessage) => {
+        console.log('[Panel Todo] Received message from webview:', message?.type);
         try {
           await this._handleMessage(message);
         } catch (error) {
-          console.error('Error handling webview message:', error);
+          console.error('[Panel Todo] Error handling webview message:', error);
           this._view?.webview.postMessage({
             type: 'error',
             error: error instanceof Error ? error.message : 'Unknown error',
@@ -323,7 +336,7 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
 
       case 'toggle':
         if (message.id) {
-          await this._toggleTodo(message.id);
+          await this._toggleTodo(message.id, message.opId);
         }
         break;
 
@@ -334,7 +347,7 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
         break;
 
       case 'undo':
-        await this.undoDelete();
+        await this.undoDelete(message.opId);
         break;
 
       case 'signIn':
@@ -629,6 +642,16 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
         }
         break;
 
+      case 'reloadWindow':
+        vscode.commands.executeCommand('workbench.action.reloadWindow');
+        break;
+
+      case 'copyToClipboard':
+        if (message.text) {
+          vscode.env.clipboard.writeText(message.text);
+        }
+        break;
+
       // API Token Management (for MCP integration)
       case 'showTokenNameInput': {
         // Show VS Code's native input box (prompt() doesn't work in webviews)
@@ -741,36 +764,65 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private async _toggleTodo(id: string): Promise<void> {
-    const todos = this._getTodos();
-    const todo = todos.find((t) => t.id === id);
-    if (todo) {
-      // Store for undo (before marking complete)
-      this._lastDeleted = { ...todo };
-      // Mark as completed
-      todo.completed = true;
-      todo.updatedAt = Date.now();
-      await this._setTodos(todos);
+  private async _toggleTodo(id: string, opId?: string): Promise<void> {
+    console.log('[Panel Todo] _toggleTodo called with id:', id, 'opId:', opId);
+    this._localChangeInProgress = true; // Prevent cloud sync from overwriting
+    try {
+      const todos = this._getTodos();
+      const todo = todos.find((t) => t.id === id);
+      console.log('[Panel Todo] _toggleTodo found todo:', todo ? 'yes' : 'no');
+      if (todo) {
+        // Store for undo (before marking complete)
+        this._lastDeleted = { ...todo };
+        // Mark as completed
+        todo.completed = true;
+        todo.updatedAt = Date.now();
+        await this._setTodos(todos);
+        console.log('[Panel Todo] _toggleTodo completed, todos count:', todos.length);
+
+        // Send ACK back to webview to clear pending operation
+        if (opId) {
+          this._view?.webview.postMessage({ type: 'toggleAck', opId });
+          console.log('[Panel Todo] _toggleTodo sent ACK for opId:', opId);
+        }
+      }
+    } finally {
+      // Allow cloud sync again after a short delay to let the sync complete
+      setTimeout(() => {
+        this._localChangeInProgress = false;
+      }, 2000);
     }
   }
 
   private async _editTodo(id: string, text: string): Promise<void> {
-    const todos = this._getTodos();
-    const todo = todos.find((t) => t.id === id);
-    if (todo) {
-      todo.text = text.trim();
-      await this._setTodos(todos);
+    this._localChangeInProgress = true; // Prevent cloud sync from overwriting
+    try {
+      const todos = this._getTodos();
+      const todo = todos.find((t) => t.id === id);
+      if (todo) {
+        todo.text = text.trim();
+        todo.updatedAt = Date.now();
+        await this._setTodos(todos);
+      }
+    } finally {
+      setTimeout(() => {
+        this._localChangeInProgress = false;
+      }, 2000);
     }
   }
 
   private _postTodos(): void {
+    console.log('[Panel Todo] _postTodos called, view exists:', !!this._view);
     if (this._view) {
       // Filter out completed todos - they stay in storage for sync but don't show in UI
       const activeTodos = this._getTodos().filter((t) => !t.completed);
+      console.log('[Panel Todo] _postTodos sending', activeTodos.length, 'active todos to webview');
       this._view.webview.postMessage({
         type: 'todos',
         todos: activeTodos,
       });
+    } else {
+      console.log('[Panel Todo] _postTodos: view is null, cannot send todos!');
     }
   }
 
@@ -827,6 +879,12 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
       return;
     }
 
+    // Don't overwrite local changes that are still being processed
+    if (this._localChangeInProgress) {
+      console.log('[Panel Todo] _syncFromCloud skipped - local change in progress');
+      return;
+    }
+
     this._postSyncState(true);
 
     try {
@@ -847,7 +905,8 @@ export class TodoViewProvider implements vscode.WebviewViewProvider {
             workspaceId,
             todos: localTodos,
           });
-          // Keep local todos, they're now synced to cloud
+          // Keep local todos, they're now synced to cloud - but we need to render them!
+          this._postTodos();
         } else {
           // Normal sync: use workspace cloud data
           // Defensive filter: exclude any completed items from server response

@@ -2075,6 +2075,87 @@ export function getHtml(webview: vscode.Webview): string {
       to { transform: rotate(360deg); }
     }
 
+    .host-slow-indicator {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75em;
+      font-weight: 500;
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      cursor: help;
+    }
+
+    .host-slow-indicator.visible {
+      display: inline-flex;
+    }
+
+    .host-slow-indicator .pending-count {
+      background: rgba(245, 158, 11, 0.3);
+      padding: 0 4px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+
+    /* Host Error State (escalated from queued state after many retries) */
+    .host-error-indicator {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      background: var(--vscode-inputValidation-warningBackground, rgba(255, 200, 0, 0.1));
+      border: 1px solid var(--vscode-inputValidation-warningBorder, #cca700);
+      border-radius: 6px;
+      font-size: 0.85em;
+    }
+
+    .host-error-indicator.visible {
+      display: flex;
+    }
+
+    .host-error-title {
+      font-weight: 600;
+      color: var(--vscode-foreground);
+    }
+
+    .host-error-body p {
+      margin: 0 0 6px 0;
+      opacity: 0.9;
+    }
+
+    .host-error-body ul {
+      margin: 0 0 8px 0;
+      padding-left: 18px;
+      opacity: 0.85;
+    }
+
+    .host-error-body li {
+      margin: 2px 0;
+    }
+
+    .host-error-prompt {
+      width: 100%;
+      min-height: 60px;
+      padding: 8px;
+      margin-top: 8px;
+      font-size: 11px;
+      font-family: var(--vscode-editor-font-family, monospace);
+      line-height: 1.4;
+      background: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      border: 1px solid var(--vscode-input-border, transparent);
+      border-radius: 4px;
+      resize: none;
+      cursor: text;
+    }
+
+    .host-error-prompt:focus {
+      outline: 1px solid var(--vscode-focusBorder);
+    }
+
     /* Conflict Resolution UI */
     .conflicts-banner {
       display: none;
@@ -2542,20 +2623,57 @@ export function getHtml(webview: vscode.Webview): string {
       font-size: inherit;
     }
 
-    .undo-bar {
-      display: none;
-      padding: 8px 12px;
+    /* Inline undo notification (replaces todo item in-place) */
+    .todo-completed-inline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
       background: var(--vscode-inputValidation-infoBackground);
       border: 1px solid var(--vscode-inputValidation-infoBorder);
       border-radius: 6px;
-      font-size: 0.9em;
-      align-items: center;
-      justify-content: space-between;
+      font-size: 0.85em;
       gap: 8px;
+      animation: fadeIn 0.2s ease;
     }
 
-    .undo-bar.visible {
+    .todo-completed-inline .status {
       display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--vscode-foreground);
+      opacity: 0.8;
+    }
+
+    .todo-completed-inline .status .spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(59, 130, 246, 0.3);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .todo-completed-inline .status.synced {
+      color: #22c55e;
+    }
+
+    .todo-completed-inline .status.warning {
+      color: #f59e0b;
+    }
+
+    .todo-completed-inline .undo-inline-btn {
+      background: transparent;
+      border: 1px solid var(--vscode-button-border, var(--vscode-foreground));
+      color: var(--vscode-foreground);
+      padding: 2px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85em;
+    }
+
+    .todo-completed-inline .undo-inline-btn:hover {
+      background: var(--vscode-button-hoverBackground);
     }
 
     /* Unassigned todos section (for migrating legacy cloud todos) */
@@ -2626,6 +2744,59 @@ export function getHtml(webview: vscode.Webview): string {
     .undo-btn:hover {
       background: var(--vscode-button-hoverBackground);
     }
+
+    /* Help section cards */
+    .help-card {
+      background: var(--vscode-editor-background);
+      border: 1px solid var(--vscode-widget-border, var(--vscode-input-border));
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .help-card h4 {
+      margin: 0 0 8px 0;
+      font-size: 0.95em;
+    }
+
+    .help-card p, .help-card ul {
+      margin: 6px 0;
+      font-size: 0.85em;
+      opacity: 0.9;
+    }
+
+    .help-card ul {
+      padding-left: 20px;
+    }
+
+    .help-card a {
+      color: var(--vscode-textLink-foreground);
+      cursor: pointer;
+    }
+
+    .help-card a:hover {
+      text-decoration: underline;
+    }
+
+    .cleanup-prompt-box {
+      margin-top: 8px;
+      padding: 10px;
+      background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
+      border-radius: 4px;
+      border-left: 3px solid var(--vscode-textLink-foreground);
+    }
+
+    .cleanup-prompt-text {
+      font-size: 0.85em;
+      line-height: 1.4;
+      margin-bottom: 10px;
+      opacity: 0.9;
+      font-family: var(--vscode-editor-font-family, monospace);
+    }
+
+    .cleanup-prompt-box .button {
+      margin-top: 4px;
+    }
   </style>
 </head>
 <body>
@@ -2667,6 +2838,7 @@ export function getHtml(webview: vscode.Webview): string {
       <div class="project-selector-right">
         <span id="sync-indicator" class="sync-indicator"><span class="sync-spinner"></span>Syncing</span>
         <span id="offline-indicator" class="offline-indicator">Offline</span>
+        <span id="host-slow-indicator" class="host-slow-indicator" title="Extension host is slow or frozen. Your changes are queued and will be saved when it recovers.">⏳ Queued <span class="pending-count" id="pending-count">0</span></span>
         <span id="auth-status" class="tier-badge">Pro</span>
         <button id="sign-in-btn" class="button small">Sign in</button>
         <button id="sign-out-btn" class="button secondary small hidden">Sign out</button>
@@ -2693,6 +2865,17 @@ export function getHtml(webview: vscode.Webview): string {
       <button id="tab-issues" class="tab" data-tab="issues">Issues</button>
       <button id="tab-kanban" class="tab" data-tab="kanban">Kanban</button>
       <button id="tab-account" class="tab" data-tab="account">Account</button>
+      <button id="tab-help" class="tab" data-tab="help" title="Help & Troubleshooting">Help</button>
+    </div>
+
+    <!-- Host Error Indicator (shown after many retry attempts) -->
+    <div id="host-error-indicator" class="host-error-indicator" title="Extension host is unresponsive">
+      <div class="host-error-title">⚠️ Extension host unresponsive</div>
+      <div class="host-error-body">
+        <p>AI extensions with large chat histories are blocking VS Code. Copy this prompt and paste it into your AI assistant:</p>
+        <textarea class="host-error-prompt" readonly onclick="this.select()">Please clean up VS Code chat history to fix extension host freezes. Run "Chat: Clear All Workspace Chats" (Cmd/Ctrl+Shift+P) multiple times until cleared, then check ~/.continue and other AI extension data directories for large/old files. Finally reload VS Code.</textarea>
+        <p style="font-size: 11px; opacity: 0.7; margin-top: 6px;">Click the text above to select, then Cmd/Ctrl+C to copy</p>
+      </div>
     </div>
 
     <!-- Todos Section -->
@@ -2701,10 +2884,6 @@ export function getHtml(webview: vscode.Webview): string {
       <div class="input-row">
         <input id="todo-input" type="text" placeholder="Add a todo and press Enter" />
         <button id="add-btn" title="Add">+</button>
-      </div>
-      <div id="undo-bar" class="undo-bar">
-        <span>Todo deleted</span>
-        <button id="undo-btn" class="undo-btn">Undo</button>
       </div>
       <div id="empty" class="empty">No todos yet. Add one above.</div>
       <ul id="list"></ul>
@@ -2939,6 +3118,50 @@ export function getHtml(webview: vscode.Webview): string {
           <a id="privacy-link">Privacy Policy</a>
           <a id="terms-link">Terms of Service</a>
         </div>
+      </div>
+    </div>
+
+    <!-- Help Section -->
+    <div id="help-section" class="section hidden">
+      <h3 style="margin: 0 0 12px 0; font-size: 1em;">Help & Troubleshooting</h3>
+
+      <div class="help-card">
+        <h4>&#x23F3; "Queued" indicator showing?</h4>
+        <p>This means the VS Code extension host is slow or frozen. Your changes are saved locally and will sync when it recovers.</p>
+        <p><strong>Why this happens:</strong></p>
+        <p>VS Code runs all extensions in a single-threaded process. When AI extensions (Claude Code, Copilot, Continue) have large chat histories, parsing them blocks everything.</p>
+        <p><strong>Quick fix:</strong></p>
+        <ol style="margin: 8px 0; padding-left: 20px;">
+          <li>Open Command Palette (Cmd/Ctrl+Shift+P)</li>
+          <li>Run <code>Chat: Clear All Workspace Chats</code></li>
+          <li>Repeat step 2 until cleared (large histories need multiple runs)</li>
+          <li>Reload VS Code window</li>
+        </ol>
+        <p style="margin-top: 12px;"><strong>AI Assistant prompt:</strong></p>
+        <div class="cleanup-prompt-box">
+          <div class="cleanup-prompt-text">Please clean up VS Code chat history to fix extension host freezes. Run "Chat: Clear All Workspace Chats" (Cmd/Ctrl+Shift+P) multiple times until cleared, then check ~/.continue and other AI extension data directories for large/old files. Finally reload VS Code.</div>
+          <button id="help-copy-prompt-btn" class="button secondary small">Copy prompt</button>
+        </div>
+      </div>
+
+      <div class="help-card">
+        <h4>&#x1F504; Todos not syncing?</h4>
+        <ul>
+          <li>Check the "Offline" indicator in the header</li>
+          <li>Ensure you're signed in (Account tab)</li>
+          <li>Try reloading the VS Code window</li>
+        </ul>
+      </div>
+
+      <div class="help-card">
+        <h4>&#x1F4CB; MCP Integration</h4>
+        <p>Panel Todo works with AI assistants via MCP (Model Context Protocol).</p>
+        <p><a id="help-mcp-link">Setup guide &#x2192;</a></p>
+      </div>
+
+      <div class="help-card">
+        <h4>&#x1F41B; Report an issue</h4>
+        <p><a id="help-github-link">GitHub Issues &#x2192;</a></p>
       </div>
     </div>
 
@@ -3191,11 +3414,11 @@ export function getHtml(webview: vscode.Webview): string {
     const unassignedSection = document.getElementById("unassigned-section");
     const unassignedList = document.getElementById("unassigned-list");
     const migrateBtn = document.getElementById("migrate-btn");
-    const undoBar = document.getElementById("undo-bar");
-    const undoBtn = document.getElementById("undo-btn");
     const authStatus = document.getElementById("auth-status");
     const syncIndicator = document.getElementById("sync-indicator");
     const offlineIndicator = document.getElementById("offline-indicator");
+    const hostSlowIndicator = document.getElementById("host-slow-indicator");
+    const pendingCountEl = document.getElementById("pending-count");
     const conflictsBanner = document.getElementById("conflicts-banner");
     const conflictsList = document.getElementById("conflicts-list");
     const resolveAllLocal = document.getElementById("resolve-all-local");
@@ -3229,10 +3452,12 @@ export function getHtml(webview: vscode.Webview): string {
     const tabIssues = document.getElementById("tab-issues");
     const tabKanban = document.getElementById("tab-kanban");
     const tabAccount = document.getElementById("tab-account");
+    const tabHelp = document.getElementById("tab-help");
     const todosSection = document.getElementById("todos-section");
     const issuesSection = document.getElementById("issues-section");
     const kanbanSection = document.getElementById("kanban-section");
     const accountSection = document.getElementById("account-section");
+    const helpSection = document.getElementById("help-section");
 
     // Account elements
     const accountEmail = document.getElementById("account-email");
@@ -3346,7 +3571,6 @@ export function getHtml(webview: vscode.Webview): string {
     const deleteIssueConfirm = document.getElementById("delete-issue-confirm");
     const trashDropZone = document.getElementById("trash-drop-zone");
 
-    let undoTimeout = null;
     let currentDevTier = "free";
     let currentUserEmail = null;
     let currentTab = "todos";
@@ -3368,6 +3592,99 @@ export function getHtml(webview: vscode.Webview): string {
     let filterPriority = ""; // "" = all, or "low", "medium", "high", "critical"
     let filterTagId = ""; // "" = all, or tag id
 
+    // Pending operations queue - persisted to localStorage for resilience against extension host freezes
+    let pendingOperations = [];
+    let retryCount = 0;
+    const MAX_RETRIES_BEFORE_ERROR = 10;
+
+    // Load any pending operations from previous session
+    function loadPendingOps() {
+      try {
+        const stored = localStorage.getItem('panelTodo_pendingOps');
+        if (stored) {
+          pendingOperations = JSON.parse(stored);
+          if (pendingOperations.length > 0) {
+            console.log("[Panel Todo Webview] Loaded", pendingOperations.length, "pending ops from previous session:", pendingOperations.map(op => op.id));
+          }
+        }
+      } catch (e) {
+        pendingOperations = [];
+      }
+    }
+
+    function savePendingOps() {
+      try {
+        localStorage.setItem('panelTodo_pendingOps', JSON.stringify(pendingOperations));
+      } catch (e) {
+        // localStorage may not be available in some webview contexts
+      }
+    }
+
+    function addPendingOp(op) {
+      pendingOperations.push({ ...op, timestamp: Date.now() });
+      savePendingOps();
+      console.log("[Panel Todo Webview] Added pending op:", op.id, "total pending:", pendingOperations.length);
+    }
+
+    function removePendingOp(opId) {
+      pendingOperations = pendingOperations.filter(op => op.id !== opId);
+      savePendingOps();
+      updateHostSlowIndicator();
+    }
+
+    function updateHostSlowIndicator() {
+      const now = Date.now();
+      // Show indicator if any operation has been pending for more than 3 seconds
+      const hasSlowOps = pendingOperations.some(op => now - op.timestamp > 3000);
+      const hostErrorIndicator = document.getElementById("host-error-indicator");
+
+      if (pendingOperations.length === 0) {
+        // All clear - reset everything
+        hostSlowIndicator.classList.remove("visible");
+        if (hostErrorIndicator) hostErrorIndicator.classList.remove("visible");
+        retryCount = 0;
+      } else if (retryCount >= MAX_RETRIES_BEFORE_ERROR) {
+        // Error state - show prominent error
+        hostSlowIndicator.classList.remove("visible");
+        if (hostErrorIndicator) hostErrorIndicator.classList.add("visible");
+      } else if (hasSlowOps) {
+        // Normal queued state
+        hostSlowIndicator.classList.add("visible");
+        if (hostErrorIndicator) hostErrorIndicator.classList.remove("visible");
+        pendingCountEl.textContent = pendingOperations.length;
+      } else {
+        hostSlowIndicator.classList.remove("visible");
+        if (hostErrorIndicator) hostErrorIndicator.classList.remove("visible");
+      }
+    }
+
+    function retryPendingOps() {
+      // Retry operations that haven't been ACK'd within 5 seconds
+      const now = Date.now();
+      let retried = 0;
+      pendingOperations.forEach(op => {
+        if (now - op.timestamp > 5000) {
+          // Re-send the operation
+          console.log("[Panel Todo Webview] Retrying pending op:", op.id, "age:", Math.round((now - op.timestamp) / 1000) + "s");
+          vscode.postMessage(op.message);
+          op.timestamp = now; // Reset retry timer
+          retried++;
+        }
+      });
+
+      // Track consecutive retry cycles with pending operations
+      if (pendingOperations.length > 0 && retried > 0) {
+        retryCount++;
+        console.log("[Panel Todo Webview] Retry cycle:", retryCount, "pending:", pendingOperations.length);
+      }
+
+      if (pendingOperations.length > 0) {
+        console.log("[Panel Todo Webview] Pending ops:", pendingOperations.length, "retried:", retried);
+      }
+      savePendingOps();
+      updateHostSlowIndicator();
+    }
+
     // Fake issues data for testing
     const fakeIssues = [
       { id: "1", key: "PT-1", title: "Implement cloud sync", status: "in_progress", priority: "high", labels: ["feature"] },
@@ -3379,27 +3696,6 @@ export function getHtml(webview: vscode.Webview): string {
       { id: "7", key: "PT-7", title: "Code review PR #123", status: "review", priority: "medium", labels: [] },
       { id: "8", key: "PT-8", title: "Deploy v1.0", status: "done", priority: "high", labels: ["release"] },
     ];
-
-    function showUndoBar() {
-      // Clear any existing timeout
-      if (undoTimeout) {
-        clearTimeout(undoTimeout);
-      }
-
-      undoBar.classList.add("visible");
-
-      // Auto-hide after 5 seconds
-      undoTimeout = setTimeout(() => {
-        undoBar.classList.remove("visible");
-      }, 5000);
-    }
-
-    function hideUndoBar() {
-      if (undoTimeout) {
-        clearTimeout(undoTimeout);
-      }
-      undoBar.classList.remove("visible");
-    }
 
     function renderAuthPending(pending) {
       if (!pending) {
@@ -3504,19 +3800,29 @@ export function getHtml(webview: vscode.Webview): string {
 
       renderAuthPending(state ? state.pending : null);
 
-      // Show/hide tabs and issues section based on tier
+      // Always show tab bar (Todos + Help for everyone, Issues/Kanban/Account for Pro)
+      tabBar.classList.add("visible");
+
       if (isPro) {
-        tabBar.classList.add("visible");
+        // Show Pro tabs
+        tabIssues.classList.remove("hidden");
+        tabKanban.classList.remove("hidden");
+        tabAccount.classList.remove("hidden");
         // Fetch real data from backend when Pro
         vscode.postMessage({ type: "fetchProjects" });
         vscode.postMessage({ type: "fetchIssues" });
         vscode.postMessage({ type: "fetchSprints" });
         vscode.postMessage({ type: "fetchTags" });
       } else {
-        tabBar.classList.remove("visible");
+        // Hide Pro-only tabs for free users
+        tabIssues.classList.add("hidden");
+        tabKanban.classList.add("hidden");
+        tabAccount.classList.add("hidden");
         projectSelector.classList.remove("has-projects");
-        // Reset to todos tab if not Pro
-        switchTab("todos");
+        // Reset to todos tab if on a Pro-only tab
+        if (currentTab === "issues" || currentTab === "kanban" || currentTab === "account") {
+          switchTab("todos");
+        }
       }
     }
 
@@ -3526,10 +3832,12 @@ export function getHtml(webview: vscode.Webview): string {
       tabIssues.classList.toggle("active", tab === "issues");
       tabKanban.classList.toggle("active", tab === "kanban");
       tabAccount.classList.toggle("active", tab === "account");
+      tabHelp.classList.toggle("active", tab === "help");
       todosSection.classList.toggle("hidden", tab !== "todos");
       issuesSection.classList.toggle("hidden", tab !== "issues");
       kanbanSection.classList.toggle("hidden", tab !== "kanban");
       accountSection.classList.toggle("hidden", tab !== "account");
+      helpSection.classList.toggle("hidden", tab !== "help");
 
       // Render kanban when switching to kanban tab
       if (tab === "kanban") {
@@ -5010,7 +5318,94 @@ export function getHtml(webview: vscode.Webview): string {
       });
     }
 
+    /**
+     * Re-attach event listeners to a todo item after undo restores its content
+     */
+    function reattachTodoListeners(li, todo) {
+      const checkbox = li.querySelector('input[type="checkbox"]');
+      const label = li.querySelector('label');
+      const sendBtn = li.querySelector('.send-to-terminal-btn');
+
+      if (checkbox) {
+        checkbox.checked = false;
+        // Re-attach the change handler
+        checkbox.addEventListener("change", () => {
+          const todoId = todo.id;
+          const opId = 'toggle_' + todoId + '_' + Date.now();
+          console.log("[Panel Todo Webview] Checkbox clicked for todo (reattached):", todoId, "opId:", opId);
+
+          // INLINE UNDO: Store original content (closure captures it)
+          const originalContent = li.innerHTML;
+          const originalClass = li.className;
+          const originalTodo = { ...todo };
+
+          // Replace with inline notification
+          li.className = 'todo-completed-inline';
+          li.innerHTML = \`
+            <span class="status" id="status-\${opId}">
+              <span class="spinner"></span>
+              Saving...
+            </span>
+            <button class="undo-inline-btn" data-op-id="\${opId}">Undo</button>
+          \`;
+
+          // Attach undo handler to inline button (self-contained)
+          li.querySelector('.undo-inline-btn').addEventListener('click', () => {
+            console.log("[Panel Todo Webview] Inline undo clicked for:", todoId);
+            // Restore original todo content
+            li.className = originalClass || '';
+            li.innerHTML = originalContent;
+            reattachTodoListeners(li, originalTodo);
+
+            // Remove from pending operations
+            pendingOperations = pendingOperations.filter(op =>
+              !(op.type === 'toggle' && op.todoId === todoId)
+            );
+            savePendingOps();
+            updateHostSlowIndicator();
+
+            // Send undo to extension
+            const undoOpId = 'undo_' + Date.now();
+            addPendingOp({ id: undoOpId, type: 'undo', message: { type: "undo", opId: undoOpId }});
+            vscode.postMessage({ type: "undo", opId: undoOpId });
+          });
+
+          // Add to pending operations (persisted to localStorage for resilience)
+          addPendingOp({
+            id: opId,
+            type: 'toggle',
+            todoId: todoId,
+            message: { type: "toggle", id: todoId, opId: opId }
+          });
+
+          // Auto-remove after 5 seconds
+          setTimeout(() => {
+            if (li.parentNode && li.classList.contains('todo-completed-inline')) {
+              li.style.transition = 'opacity 0.3s, max-height 0.3s';
+              li.style.opacity = '0';
+              li.style.maxHeight = '0';
+              li.style.overflow = 'hidden';
+              setTimeout(() => li.remove(), 300);
+            }
+          }, 5000);
+
+          // Send to extension (fire-and-forget - will process when host is responsive)
+          vscode.postMessage({ type: "toggle", id: todoId, opId: opId });
+        });
+      }
+      if (label) {
+        label.addEventListener("click", () => startEdit(li, todo));
+      }
+      if (sendBtn) {
+        sendBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          vscode.postMessage({ type: "sendToTerminal", text: "Todo: " + todo.text });
+        });
+      }
+    }
+
     function render(todos) {
+      console.log("[Panel Todo Webview] render() called with", todos ? todos.length : 0, "todos");
       list.textContent = "";
 
       if (!todos || todos.length === 0) {
@@ -5019,15 +5414,78 @@ export function getHtml(webview: vscode.Webview): string {
         empty.style.display = "none";
       }
 
-      todos.forEach((todo) => {
+      todos.forEach((todo, index) => {
         const li = document.createElement("li");
+        li.setAttribute("data-id", todo.id);
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.setAttribute("aria-label", "Complete todo");
         checkbox.addEventListener("change", () => {
-          vscode.postMessage({ type: "toggle", id: todo.id });
-          showUndoBar();
+          const todoId = todo.id;
+          const opId = 'toggle_' + todoId + '_' + Date.now();
+          console.log("[Panel Todo Webview] Checkbox clicked for todo:", todoId, "opId:", opId);
+
+          // INLINE UNDO: Store original content (closure captures it)
+          const originalContent = li.innerHTML;
+          const originalClass = li.className;
+          const originalTodo = { ...todo };
+
+          // Replace with inline notification
+          li.className = 'todo-completed-inline';
+          li.innerHTML = \`
+            <span class="status" id="status-\${opId}">
+              <span class="spinner"></span>
+              Saving...
+            </span>
+            <button class="undo-inline-btn" data-op-id="\${opId}">Undo</button>
+          \`;
+
+          // Attach undo handler to inline button (self-contained)
+          li.querySelector('.undo-inline-btn').addEventListener('click', () => {
+            console.log("[Panel Todo Webview] Inline undo clicked for:", todoId);
+            // Restore original todo content
+            li.className = originalClass || '';
+            li.innerHTML = originalContent;
+            reattachTodoListeners(li, originalTodo);
+
+            // Remove from pending operations
+            pendingOperations = pendingOperations.filter(op =>
+              !(op.type === 'toggle' && op.todoId === todoId)
+            );
+            savePendingOps();
+            updateHostSlowIndicator();
+
+            // Send undo to extension
+            const undoOpId = 'undo_' + Date.now();
+            addPendingOp({ id: undoOpId, type: 'undo', message: { type: "undo", opId: undoOpId }});
+            vscode.postMessage({ type: "undo", opId: undoOpId });
+          });
+
+          // Add to pending operations (persisted to localStorage for resilience)
+          addPendingOp({
+            id: opId,
+            type: 'toggle',
+            todoId: todoId,
+            message: { type: "toggle", id: todoId, opId: opId }
+          });
+
+          // Auto-remove after 5 seconds
+          setTimeout(() => {
+            if (li.parentNode && li.classList.contains('todo-completed-inline')) {
+              li.style.transition = 'opacity 0.3s, max-height 0.3s';
+              li.style.opacity = '0';
+              li.style.maxHeight = '0';
+              li.style.overflow = 'hidden';
+              setTimeout(() => li.remove(), 300);
+            }
+          }, 5000);
+
+          // Send to extension (fire-and-forget - will process when host is responsive)
+          vscode.postMessage({ type: "toggle", id: todoId, opId: opId });
         });
+        if (index === 0) {
+          console.log("[Panel Todo Webview] First checkbox event listener attached for:", todo.id);
+        }
 
         const label = document.createElement("label");
         label.textContent = todo.text;
@@ -5089,7 +5547,6 @@ export function getHtml(webview: vscode.Webview): string {
       vscode.postMessage({ type: "add", text });
       input.value = "";
       input.focus();
-      hideUndoBar(); // Hide undo bar when adding new todo
     }
 
     signInBtn.addEventListener("click", () => {
@@ -5137,6 +5594,21 @@ export function getHtml(webview: vscode.Webview): string {
     tabIssues.addEventListener("click", () => switchTab("issues"));
     tabKanban.addEventListener("click", () => switchTab("kanban"));
     tabAccount.addEventListener("click", () => switchTab("account"));
+    tabHelp.addEventListener("click", () => switchTab("help"));
+
+    // Help section link handlers
+    const helpMcpLink = document.getElementById("help-mcp-link");
+    const helpGithubLink = document.getElementById("help-github-link");
+    if (helpMcpLink) {
+      helpMcpLink.addEventListener("click", () => {
+        vscode.postMessage({ type: "openLink", url: "https://panel-todo.com/docs/installing-mcp-server" });
+      });
+    }
+    if (helpGithubLink) {
+      helpGithubLink.addEventListener("click", () => {
+        vscode.postMessage({ type: "openLink", url: "https://github.com/ingimar-eyfjord/panel-todo/issues" });
+      });
+    }
 
     // Account event listeners
     exportDataBtn.addEventListener("click", () => {
@@ -5469,17 +5941,14 @@ export function getHtml(webview: vscode.Webview): string {
       }
     });
 
-    undoBtn.addEventListener("click", () => {
-      vscode.postMessage({ type: "undo" });
-      hideUndoBar();
-    });
-
     window.addEventListener("message", (event) => {
       const message = event.data;
+      console.log("[Panel Todo Webview] Received message:", message ? message.type : "null");
       if (!message) return;
 
       switch (message.type) {
         case "todos":
+          console.log("[Panel Todo Webview] Received todos message with", message.todos ? message.todos.length : 0, "todos");
           render(message.todos);
           break;
         case "unassignedTodos":
@@ -5496,6 +5965,26 @@ export function getHtml(webview: vscode.Webview): string {
           break;
         case "conflicts":
           renderConflicts(message.conflicts);
+          break;
+        case "toggleAck":
+          // Extension confirmed it processed the toggle
+          if (message.opId) {
+            removePendingOp(message.opId);
+            console.log("[Panel Todo Webview] Toggle ACK received for opId:", message.opId);
+            // Update inline status to show synced
+            const statusEl = document.getElementById('status-' + message.opId);
+            if (statusEl) {
+              statusEl.className = 'status synced';
+              statusEl.innerHTML = '&#x2713; Done';
+            }
+          }
+          break;
+        case "undoAck":
+          // Extension confirmed it processed the undo
+          if (message.opId) {
+            removePendingOp(message.opId);
+            console.log("[Panel Todo Webview] Undo ACK received for opId:", message.opId);
+          }
           break;
         case "focusInput":
           input.focus();
@@ -5651,6 +6140,26 @@ export function getHtml(webview: vscode.Webview): string {
           break;
       }
     });
+
+    // Initialize pending operations system
+    loadPendingOps();
+
+    // Retry any pending operations every 5 seconds (handles extension host freeze recovery)
+    setInterval(retryPendingOps, 5000);
+
+    // Also retry immediately on load (1 second delay to let extension initialize)
+    setTimeout(retryPendingOps, 1000);
+
+    // Copy prompt button handler (in help section - works when host is responsive)
+    const helpCopyPromptBtn = document.getElementById("help-copy-prompt-btn");
+    if (helpCopyPromptBtn) {
+      helpCopyPromptBtn.addEventListener("click", () => {
+        const cleanupPromptText = "Please clean up VS Code chat history to fix extension host freezes. Run \\"Chat: Clear All Workspace Chats\\" (Cmd/Ctrl+Shift+P) multiple times until cleared, then check ~/.continue and other AI extension data directories for large/old files. Finally reload VS Code.";
+        vscode.postMessage({ type: "copyToClipboard", text: cleanupPromptText });
+        helpCopyPromptBtn.textContent = "Copied!";
+        setTimeout(() => { helpCopyPromptBtn.textContent = "Copy prompt"; }, 2000);
+      });
+    }
 
     vscode.postMessage({ type: "ready" });
   </script>

@@ -134,6 +134,29 @@ Your AI assistant becomes a project manager:
 
 ---
 
+## Troubleshooting
+
+### "Queued" indicator showing
+
+If you see a yellow "⏳ Queued X" indicator, it means the VS Code extension host is busy or frozen. This commonly happens when:
+
+- Claude Code or GitHub Copilot is processing large requests
+- Many extensions are running simultaneously
+- Large workspace is being indexed
+
+**Your changes are safe!** Panel Todo saves pending operations locally and will sync them when the extension host recovers. You can also reload the VS Code window (Cmd/Ctrl+R) to speed up recovery.
+
+### Extension host frozen
+
+If the extension host is completely frozen, Panel Todo will:
+1. Show a "Queued" indicator with the number of pending operations
+2. Retry operations every 5 seconds
+3. Persist operations to localStorage so they survive VS Code restart
+
+This ensures your completed todos are never lost, even during extension host freezes.
+
+---
+
 ## Links
 
 - [Website](https://panel-todo.com)

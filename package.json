@@ -2,7 +2,7 @@
   "name": "panel-todo",
   "displayName": "Panel Todo",
   "description": "Todo list and issue tracker in VS Code's panel. MCP integration for AI assistants. Cloud sync, sprints, kanban-style project management. Free tier available.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "IngimarEyfjord",
   "license": "MIT",
   "icon": "media/icon.png",

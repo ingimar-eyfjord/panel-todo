@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-02-10
+
+### Added
+- **Help tab for all users**: The Help tab is now visible for everyone, not just Pro users. Renamed from "?" to "Help" for clarity.
+- **Extension host freeze troubleshooting**: Added detailed explanation of why VS Code can become unresponsive when AI extensions (Claude Code, Copilot, Continue) have large chat histories.
+- **Cleanup prompt for AI assistants**: When the extension host becomes unresponsive, a selectable text prompt is shown that users can copy and paste into their AI assistant to get help clearing chat history.
+- **Copy prompt button**: Help section includes a one-click "Copy prompt" button for the cleanup instructions.
+
+### Changed
+- **Host Error Indicator redesign**: Replaced non-functional buttons (which don't work when the host is frozen) with a selectable textarea containing the cleanup prompt.
+- Improved troubleshooting instructions with step-by-step guide to clear VS Code chat histories.
+
+### Technical
+- This release addresses the fundamental VS Code architecture limitation where all extensions share a single-threaded event loop. When AI extensions parse large JSON chat histories, they block all other extensions including Panel Todo.
+
 ## [1.0.2] - 2026-02-10
 
 ### Fixed
@@ -107,6 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.0.3 | 2026-02-10 | Help tab for all users, extension host freeze troubleshooting |
 | 1.0.2 | 2026-02-10 | Fix completed todos reappearing, project switching, README GIF |
 | 1.0.1 | 2026-01-20 | Minor bug fixes |
 | 1.0.0 | 2026-01-20 | Production release, MCP server on npm |
